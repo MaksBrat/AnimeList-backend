@@ -8,7 +8,7 @@ namespace AnimeList.Domain.Entity.Account
         public int Id { get; set; }
         public float UserRating { get; set; }
         public int WatchedEpisodes { get; set; }
-        public AnimeStatus AnimeStatus { get; set; }
+        public AnimeListStatus AnimeStatus { get; set; }
         public int AnimeId { get; set; }
         public Anime Anime { get; set; }
         public int ProfileId { get; set; }

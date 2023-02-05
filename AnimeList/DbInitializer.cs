@@ -80,14 +80,14 @@ namespace AnimeList
 
             var genres = new Genre[]
             {
-                new Genre{ GenreName = "Romance" },
-                new Genre{ GenreName = "Action" },
-                new Genre{ GenreName = "Drama" },
-                new Genre{ GenreName = "Military" },
-                new Genre{ GenreName = "Magic" },
-                new Genre{ GenreName = "Comedy" },
-                new Genre{ GenreName = "History" },
-                new Genre{ GenreName = "Psychological" }
+                new Genre{ Name = "Romance" },
+                new Genre{ Name = "Action" },
+                new Genre{ Name = "Drama" },
+                new Genre{ Name = "Military" },
+                new Genre{ Name = "Magic" },
+                new Genre{ Name = "Comedy" },
+                new Genre{ Name = "History" },
+                new Genre{ Name = "Psychological" }
             };
 
             foreach (Genre genre in genres)
@@ -102,67 +102,67 @@ namespace AnimeList
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "White Album 2").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Romance").Id
+                    GenreId = genres.Single(x => x.Name == "Romance").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "White Album 2").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Drama").Id
+                    GenreId = genres.Single(x => x.Name == "Drama").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "Attack on titan").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Drama").Id
+                    GenreId = genres.Single(x => x.Name == "Drama").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "Death Note").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Drama").Id
+                    GenreId = genres.Single(x => x.Name == "Drama").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "Death Note").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Psychological").Id
+                    GenreId = genres.Single(x => x.Name == "Psychological").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "Death Note").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Action").Id
+                    GenreId = genres.Single(x => x.Name == "Action").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "Spy x Family").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Action").Id
+                    GenreId = genres.Single(x => x.Name == "Action").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "Spy x Family").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Comedy").Id
+                    GenreId = genres.Single(x => x.Name == "Comedy").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "Fate").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Action").Id
+                    GenreId = genres.Single(x => x.Name == "Action").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "Fate").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Drama").Id
+                    GenreId = genres.Single(x => x.Name == "Drama").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "Fate").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Magic").Id
+                    GenreId = genres.Single(x => x.Name == "Magic").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "Golden Time").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Romance").Id
+                    GenreId = genres.Single(x => x.Name == "Romance").Id
                 },
                 new AnimeGenre
                 {
                     AnimeId = allAnime.Single(x => x.Title == "Golden Time").Id,
-                    GenreId = genres.Single(x => x.GenreName == "Drama").Id
+                    GenreId = genres.Single(x => x.Name == "Drama").Id
                 }
             };
 

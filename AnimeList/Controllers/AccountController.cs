@@ -17,6 +17,7 @@ using Microsoft.Net.Http.Headers;
 
 namespace AnimeList.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class AccountController : ControllerBase
@@ -80,14 +81,6 @@ namespace AnimeList.Controllers
                 return Ok(new { Message = "Role Created Successfully" });
             }
             return new BadRequestObjectResult(new { Message = "Failed to create role" });
-        }
-
-        [HttpGet("names")]
-        public IActionResult names()
-        {
-            var name = User.Identity.Name;
-
-            return Ok(name);
         }
     }
 }

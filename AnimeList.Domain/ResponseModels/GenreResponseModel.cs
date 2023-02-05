@@ -9,6 +9,6 @@ namespace AnimeList.Domain.ResponseModel
     public class GenreResponseModel
     {
         public int Id { get; set; }
-        public string GenreName { get; set; }
+        public string Name { get; set; }
     }
 }

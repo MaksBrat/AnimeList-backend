@@ -1,4 +1,6 @@
-﻿using AnimeList.Domain.Entity.Account;
+﻿using AnimeList.Common.Constants;
+using AnimeList.Common.Utitlities;
+using AnimeList.Domain.Entity.Account;
 using AnimeList.Domain.Entity.Animes;
 using AnimeList.Domain.Enum;
 using AnimeList.Domain.RequestModels;
@@ -19,13 +21,13 @@ namespace AnimeList.Services
                     .Select(x => new GenreResponseModel
                     {
                         Id = x.GenreId,
-                        GenreName = x.Genre.GenreName
+                        Name = x.Genre.Name
                     }).ToList()))
                 .ForMember(dest => dest.ReleaseDate, opt => opt.MapFrom(src => src.ReleaseDate.ToString("yyyy-MM-dd")));
 
             CreateMap<AnimeRequestModel, Anime>()
-                .ForMember(dest => dest.TrailerUrl, opt => opt.Ignore())
-                .ForMember(dest => dest.PosterUrl, opt => opt.Ignore())
+                .ForMember(dest => dest.TrailerUrl, opt => opt.MapFrom(src => src.TrailerUrl != null ? UrlParser.ParseTrailerUrl(src.TrailerUrl) : null))
+                .ForMember(dest => dest.PosterUrl, opt => opt.MapFrom(src => src.PosterUrl != null ? src.PosterUrl : AnimeConstans.POSTER_URL))
                 .ForMember(dest => dest.ReleaseDate, opt =>
                     opt.MapFrom(src => DateTime.ParseExact(src.ReleaseDate, "yyyy-MM-dd", CultureInfo.InvariantCulture)
                 ));

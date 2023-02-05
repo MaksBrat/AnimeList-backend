@@ -14,25 +14,21 @@ using Newtonsoft.Json.Linq;
 using AnimeList.Domain.ResponseModels.Account;
 
 namespace AnimeList.Services.Services
-{
+{   
     public class AccountService : IAccountService
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IJWTService _jwtService;
         private readonly IProfileService _profileService;
         private readonly IConfiguration _configuration;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AccountService(UserManager<ApplicationUser> userManager, IJWTService jwtService, 
-            IProfileService profileService, IConfiguration configuration, 
-            IHttpContextAccessor httpContextAccessor)
+            IProfileService profileService, IConfiguration configuration)
         {
             _userManager = userManager;
             _jwtService = jwtService;
             _profileService = profileService;
             _configuration = configuration;
-            _httpContextAccessor = httpContextAccessor;
-
         }
 
         public async Task<IBaseResponse<IdentityUser>> Register(RegisterModel model)
@@ -143,7 +139,6 @@ namespace AnimeList.Services.Services
                 };
             }
         }
-
         public async Task<IBaseResponse<ApplicationUser>> Logout(string userName)
         {
             var user = await _userManager.FindByNameAsync(userName);
@@ -161,17 +156,6 @@ namespace AnimeList.Services.Services
             {
                 StatusCode = HttpStatusCode.OK
             };
-        }
-
-        public string GetMyName()
-        {
-            var result = string.Empty;
-            if (_httpContextAccessor.HttpContext != null)
-            {   
-                var name = _httpContextAccessor?.HttpContext?.User?.Identity?.Name;
-                result = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
-            }
-            return result;
-        }
+        }      
     }
 }

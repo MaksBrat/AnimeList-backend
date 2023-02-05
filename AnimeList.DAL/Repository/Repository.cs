@@ -33,7 +33,8 @@ namespace AnimeList.DAL.Repository
         public async Task<IList<TEntity>> GetAllAsync(
             Expression<Func<TEntity, bool>>? predicate = null, 
             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null, 
-            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null)
+            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null,
+            int take = 0)
         {
             IQueryable<TEntity> query = _dbSet;       
 
@@ -45,16 +46,19 @@ namespace AnimeList.DAL.Repository
             if (predicate is not null)
             {
                 query = query.Where(predicate);
-            }           
-
-            if (orderBy is not null)
-            {
-                return await orderBy(query).ToListAsync();
             }
 
-            return orderBy is not null
-                ? await orderBy(query).ToListAsync()
-                : await query.ToListAsync();
+            if(orderBy is not null)
+            {
+                query = orderBy(query);
+            }
+
+            if(take != 0)
+            {
+                return await query.Take(take).ToListAsync();
+            }
+
+            return await query.ToListAsync();
         }
 
         public TEntity? GetFirstOrDefault(

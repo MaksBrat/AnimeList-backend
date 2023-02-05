@@ -16,7 +16,8 @@ namespace AnimeList.Domain.ResponseModel
         public int? Episodes { get; set; }
         public int? EpisodeDuration { get; set; }
         public string AnimeType { get; set; }
-        public string ReleaseDate { get; set; }
+        public string AnimeStatus { get; set; }
+        public string ReleaseDate { get; set; }  
         public string? PosterUrl { get; set; }
         public string? TrailerUrl { get; set; }
         public ICollection<GenreResponseModel> Genres { get; set; }

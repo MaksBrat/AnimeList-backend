@@ -200,6 +200,9 @@ namespace AnimeList.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
+                    b.Property<int>("AnimeStatus")
+                        .HasColumnType("int");
+
                     b.Property<int>("AnimeType")
                         .HasColumnType("int");
 
@@ -253,7 +256,7 @@ namespace AnimeList.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<string>("GenreName")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

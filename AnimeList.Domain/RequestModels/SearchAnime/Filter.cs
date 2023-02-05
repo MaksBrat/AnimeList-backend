@@ -12,7 +12,9 @@ namespace AnimeList.Domain.RequestModels.SearchAnime
         public string? SearchQuery { get; set; }
         public GenreFilter[]? Genres { get; set; }
         public string? AnimeType { get; set; }
+        public string? AnimeStatus { get; set; }
         public string? OrderBy { get; set; }
         public string? AscOrDesc { get; set; }
+        public int Take { get; set; } = 0;
     }
 }

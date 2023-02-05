@@ -17,6 +17,5 @@ namespace AnimeList.Services.Interfaces
         Task<IBaseResponse<IdentityUser>> Register(RegisterModel model);
         Task<IBaseResponse<AuthenticatedResponse>> Login(LoginModel model);
         public Task<IBaseResponse<ApplicationUser>> Logout(string userName);
-        public string GetMyName();
     }
 }

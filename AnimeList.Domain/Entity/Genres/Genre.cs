@@ -12,7 +12,7 @@ namespace AnimeList.Domain.Entity.Genres
     public class Genre
     {
         public int Id { get; set; }
-        public string GenreName { get; set; }
+        public string Name { get; set; }
         public ICollection<AnimeGenre> AnimeGenre { get; set; }
     }
 }

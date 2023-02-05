@@ -5,13 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace AnimeList.Domain.Enum
-{
+{   
+    //general anime status
     public enum AnimeStatus
     {
-        Watched = 1,
-        Watching = 2,
-        WantToWatch = 3,
-        Stalled = 4,
-        Dropped = 5
+        Finished = 1,
+        Ongoing = 2,
+        Upcoming = 3
     }
 }

@@ -84,7 +84,8 @@ namespace AnimeList.DAL.Interfaces
         Task<IList<TEntity>> GetAllAsync(
             Expression<Func<TEntity, bool>>? predicate = null,
             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null);
+            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null,
+            int take = 0);
 
         #endregion
 

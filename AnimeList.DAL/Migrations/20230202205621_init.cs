@@ -20,6 +20,7 @@ namespace AnimeList.DAL.Migrations
                     Episodes = table.Column<int>(type: "int", nullable: false),
                     EpisodeDuration = table.Column<int>(type: "int", nullable: false),
                     AnimeType = table.Column<int>(type: "int", nullable: false),
+                    AnimeStatus = table.Column<int>(type: "int", nullable: false),
                     ReleaseDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     PosterUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TrailerUrl = table.Column<string>(type: "nvarchar(max)", nullable: true)
@@ -78,7 +79,7 @@ namespace AnimeList.DAL.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    GenreName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {

@@ -194,7 +194,7 @@ namespace AnimeList.Services.Services
                 {
                     AnimeId = animeId,
                     ProfileId = userId,
-                    AnimeStatus = Domain.Enum.AnimeStatus.WantToWatch
+                    AnimeStatus = Domain.Enum.AnimeListStatus.WantToWatch
                 };
 
                 _unitOfWork.GetRepository<UserAnimeList>().Insert(userAnime);
@@ -298,7 +298,7 @@ namespace AnimeList.Services.Services
                 var animeList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
                 predicate: x => x.Id == id);
 
-                animeList.AnimeStatus = Enum.Parse<AnimeStatus>(status);
+                animeList.AnimeStatus = Enum.Parse<AnimeListStatus>(status);
                 _unitOfWork.GetRepository<UserAnimeList>().Update(animeList);
                 _unitOfWork.SaveChanges();
 

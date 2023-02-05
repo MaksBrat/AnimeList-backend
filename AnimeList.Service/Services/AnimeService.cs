@@ -13,6 +13,7 @@ using AnimeList.Services.Extentions;
 using AnimeList.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Net;
@@ -63,6 +64,7 @@ namespace AnimeList.Services.Services
                     include: i => i
                             .Include(x => x.AnimeGenres)
                                 .ThenInclude(x => x.Genre));
+
                 if (anime == null)
                 {
                     return new BaseResponse<AnimeResponseModel>
@@ -72,20 +74,7 @@ namespace AnimeList.Services.Services
                     };
                 }              
 
-                if (model.PosterUrl != null)
-                {
-                    anime.PosterUrl = model.PosterUrl;
-                }
-
-                if (model.TrailerUrl != anime.TrailerUrl)
-                {
-                    anime.TrailerUrl = UrlParser.ParseTrailerUrl(model.TrailerUrl);
-                }
-
-                _mapper.Map(model, anime);
-
-                _unitOfWork.GetRepository<Anime>().Update(anime);
-                _unitOfWork.SaveChanges();
+                 _mapper.Map(model, anime);
 
                 //Change genres
                 var repo = _unitOfWork.GetRepository<AnimeGenre>();
@@ -93,17 +82,22 @@ namespace AnimeList.Services.Services
                 {
                     repo.Delete(anime.AnimeGenres.ToList()[i]);
                 }
-
+               
                 var newGenres = new List<AnimeGenre>();
                 foreach (var genre in model.Genres)
-                {
-                    newGenres.Add(new AnimeGenre { AnimeId = anime.Id, GenreId = genre.Id });                                                       
+                {   
+                    var Genre = _unitOfWork.GetRepository<Genre>().GetFirstOrDefault(
+                        predicate: x => x.Id == genre.Id);
+
+                    newGenres.Add(new AnimeGenre { AnimeId = anime.Id, GenreId = genre.Id, Genre = Genre });                                                       
                 }
                 repo.Insert(newGenres);
+
+                _unitOfWork.GetRepository<Anime>().Update(anime);
                 _unitOfWork.SaveChanges();
 
                 var response = _mapper.Map<AnimeResponseModel>(anime);
-               
+
                 return new BaseResponse<AnimeResponseModel>
                 {
                     Data = response,
@@ -130,7 +124,7 @@ namespace AnimeList.Services.Services
                     include: i => i
                             .Include(x => x.AnimeGenres)
                                 .ThenInclude(x => x.Genre)
-                                    .ThenInclude(x => x.GenreName));
+                                    .ThenInclude(x => x.Name));
 
                 if (anime == null)
                 {
@@ -141,7 +135,7 @@ namespace AnimeList.Services.Services
                     };
                 }
 
-                var response = _mapper.Map<Anime,AnimeResponseModel>(anime);
+                var response = _mapper.Map<AnimeResponseModel>(anime);
 
                 return new BaseResponse<AnimeResponseModel>
                 {
@@ -164,30 +158,8 @@ namespace AnimeList.Services.Services
         {
             try
             {   
-                string posterUrl = AnimeConstans.POSTER_URL; //default poster
-                string trailerUrl = null;
-
-                if (model.PosterUrl != null)
-                {
-                    posterUrl = model.PosterUrl;
-                }
-
-                if(model.TrailerUrl != null)
-                {
-                    trailerUrl = UrlParser.ParseTrailerUrl(model.TrailerUrl);
-                }
-
-                var anime = new Anime()
-                {                   
-                    Title = model.Title,
-                    Episodes = model.Episodes,
-                    EpisodeDuration = model.EpisodeDuration,
-                    AnimeType = model.AnimeType.ToEnum<AnimeType>(),
-                    ReleaseDate = DateTime.ParseExact(model.ReleaseDate, "yyyy-MM-dd", CultureInfo.InvariantCulture),
-                    PosterUrl = posterUrl,
-                    TrailerUrl = trailerUrl
-                };
-
+                var anime = _mapper.Map<Anime>(model);
+               
                 _unitOfWork.GetRepository<Anime>().Insert(anime);
                 _unitOfWork.SaveChanges();
 
@@ -201,7 +173,7 @@ namespace AnimeList.Services.Services
                             GenreId = _unitOfWork.GetRepository<Genre>()
                                 .GetFirstOrDefault(
                                     predicate:
-                                        x => x.GenreName == animegenre.GenreName)!.Id
+                                        x => x.Name == animegenre.Name)!.Id
                         });
                 }
 
@@ -215,7 +187,6 @@ namespace AnimeList.Services.Services
                     Data = respone,
                     StatusCode = HttpStatusCode.OK
                 };
-
             }
             catch (Exception ex)
             {
@@ -243,7 +214,14 @@ namespace AnimeList.Services.Services
                 {
                     var animeType = Enum.Parse<AnimeType>(filter.AnimeType);
                     Expression<Func<Anime, bool>> predicateAnimeType = x =>x.AnimeType == animeType;
-                    predicate = predicate.And(predicateAnimeType);
+                    predicate = predicate == null ? predicateAnimeType : predicate.And(predicateAnimeType);
+                }
+
+                if (filter.AnimeStatus != null)
+                {
+                    var animeStatus = Enum.Parse<AnimeStatus>(filter.AnimeStatus);
+                    Expression<Func<Anime, bool>> predicateAnimeStatus = x => x.AnimeStatus == animeStatus;
+                    predicate = predicate == null ? predicateAnimeStatus : predicate.And(predicateAnimeStatus);
                 }
 
                 if (filter.Genres != null)
@@ -251,8 +229,8 @@ namespace AnimeList.Services.Services
                     var genres = filter.Genres.Where(x => x.Checked == true).Select(x => x.Name).ToList();
                     if (genres.Count != 0)
                     {
-                        Expression<Func<Anime, bool>> predicateGenres = a => a.AnimeGenres.Where(ag => genres.Contains(ag.Genre.GenreName)).Count() == genres.Count();
-                        predicate =  predicate.And(predicateGenres);
+                        Expression<Func<Anime, bool>> predicateGenres = a => a.AnimeGenres.Where(ag => genres.Contains(ag.Genre.Name)).Count() == genres.Count();
+                        predicate = predicate == null ? predicateGenres : predicate.And(predicateGenres);
                     }
                 }
 
@@ -269,7 +247,7 @@ namespace AnimeList.Services.Services
                         case "Rating":
                             property = Expression.Property(param, nameof(Anime.Rating));
                             break;
-                        case "RealizeDate":
+                        case "ReleaseDate":
                             property = Expression.Property(param, nameof(Anime.ReleaseDate));
                             break;
                     }
@@ -284,13 +262,14 @@ namespace AnimeList.Services.Services
                         orderBy = x => x.OrderByDescending(lambda);
                     }
                 }
-               
+                
                 var anime = await _unitOfWork.GetRepository<Anime>().GetAllAsync(
                     predicate: predicate,
                     include: x => x
                         .Include(x => x.AnimeGenres)
                             .ThenInclude(x => x.Genre),
-                    orderBy: orderBy);
+                    orderBy: orderBy,
+                    take: filter.Take);
                
                 var response = _mapper.Map<List<AnimeResponseModel>>(anime);
 
@@ -308,6 +287,6 @@ namespace AnimeList.Services.Services
                     StatusCode = HttpStatusCode.InternalServerError
                 };
             }
-        }
+        }       
     }
 }
