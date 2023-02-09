@@ -1,4 +1,5 @@
 ﻿using AnimeList.Domain.Entity.Account;
+using AnimeList.Domain.Entity.AnimeNews;
 using AnimeList.Domain.Entity.Animes;
 using AnimeList.Domain.Entity.Genres;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -20,6 +21,8 @@ namespace AnimeList.DAL
         public DbSet<AnimeGenre> AnimeGenres { get; set; }
         public DbSet<UserProfile> Profiles { get; set; }
         public DbSet<UserAnimeList> UserAnimeLists { get; set; }
+        public DbSet<News> News { get; set; }
+        public DbSet<Comment> Comments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -68,6 +71,25 @@ namespace AnimeList.DAL
             {
                 builder.Property(x => x.Id).ValueGeneratedOnAdd();
             });
+
+            modelBuilder.Entity<News>(builder =>
+            {
+                builder.Property(x => x.Id).ValueGeneratedOnAdd();
+            });
+
+            modelBuilder.Entity<News>()
+                .HasMany(x => x.Comments)
+                .WithOne(x => x.News)
+                .HasForeignKey(x => x.NewsId);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.News)
+                .WithMany(n => n.Comments)
+                .HasForeignKey(c => c.NewsId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+
+
         }
     }
 }

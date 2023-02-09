@@ -21,7 +21,7 @@ namespace AnimeList
                     Rating = 9,
                     Episodes = 12,
                     EpisodeDuration = 24,
-                    AnimeType = Domain.Enum.AnimeType.Serial,
+                    AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
                 },
                 new Anime
@@ -30,7 +30,7 @@ namespace AnimeList
                     Rating = 10,
                     Episodes = 22,
                     EpisodeDuration = 24,
-                    AnimeType = Domain.Enum.AnimeType.Serial,
+                    AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
                 },
                 new Anime
@@ -39,7 +39,7 @@ namespace AnimeList
                     Rating = 10,
                     Episodes = 48,
                     EpisodeDuration = 24,
-                    AnimeType = Domain.Enum.AnimeType.Serial,
+                    AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
                 },
                 new Anime
@@ -48,7 +48,7 @@ namespace AnimeList
                     Rating = 8,
                     Episodes = 12,
                     EpisodeDuration = 23,
-                    AnimeType = Domain.Enum.AnimeType.Serial,
+                    AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
                 },
                 new Anime
@@ -57,7 +57,7 @@ namespace AnimeList
                     Rating = 9,
                     Episodes = 64,
                     EpisodeDuration = 24,
-                    AnimeType = Domain.Enum.AnimeType.Serial,
+                    AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
                 },
                 new Anime
@@ -66,7 +66,7 @@ namespace AnimeList
                     Rating = 7,
                     Episodes = 12,
                     EpisodeDuration = 24,
-                    AnimeType = Domain.Enum.AnimeType.Serial,
+                    AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
                 }
             };

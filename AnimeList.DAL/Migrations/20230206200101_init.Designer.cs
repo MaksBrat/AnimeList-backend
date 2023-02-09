@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AnimeList.DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230202205621_init")]
+    [Migration("20230206200101_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -192,6 +192,64 @@ namespace AnimeList.DAL.Migrations
                         .IsUnique();
 
                     b.ToTable("Profiles");
+                });
+
+            modelBuilder.Entity("AnimeList.Domain.Entity.AnimeNews.Comment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("NewsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("NewsId");
+
+                    b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("AnimeList.Domain.Entity.AnimeNews.News", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Title")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("News");
                 });
 
             modelBuilder.Entity("AnimeList.Domain.Entity.Animes.Anime", b =>
@@ -400,6 +458,36 @@ namespace AnimeList.DAL.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("AnimeList.Domain.Entity.AnimeNews.Comment", b =>
+                {
+                    b.HasOne("AnimeList.Domain.Entity.Account.ApplicationUser", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AnimeList.Domain.Entity.AnimeNews.News", "News")
+                        .WithMany("Comments")
+                        .HasForeignKey("NewsId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("News");
+                });
+
+            modelBuilder.Entity("AnimeList.Domain.Entity.AnimeNews.News", b =>
+                {
+                    b.HasOne("AnimeList.Domain.Entity.Account.ApplicationUser", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
             modelBuilder.Entity("AnimeList.Domain.Entity.Animes.AnimeGenre", b =>
                 {
                     b.HasOne("AnimeList.Domain.Entity.Animes.Anime", "Anime")
@@ -479,6 +567,11 @@ namespace AnimeList.DAL.Migrations
             modelBuilder.Entity("AnimeList.Domain.Entity.Account.UserProfile", b =>
                 {
                     b.Navigation("AnimeList");
+                });
+
+            modelBuilder.Entity("AnimeList.Domain.Entity.AnimeNews.News", b =>
+                {
+                    b.Navigation("Comments");
                 });
 
             modelBuilder.Entity("AnimeList.Domain.Entity.Animes.Anime", b =>

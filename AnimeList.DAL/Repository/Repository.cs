@@ -1,5 +1,4 @@
 ﻿using AnimeList.DAL.Interfaces;
-using AnimeList.Domain.RequestModels.SearchAnime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using System;

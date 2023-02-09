@@ -9,9 +9,9 @@ using Microsoft.AspNetCore.Http;
 using System.Net;
 using AnimeList.Domain.ResponseModels.Profile;
 using System.Diagnostics;
-using AnimeList.Domain.Enum;
 using AnimeList.Common.Utitlities;
 using AnimeList.Common.Extentions;
+using AnimeList.Domain.Enums;
 
 namespace AnimeList.Services.Services
 {
@@ -152,8 +152,8 @@ namespace AnimeList.Services.Services
             {
                 return new BaseResponse<UserProfileResponseModel>()
                 {
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    Description = $"Внутрішня помилка: {ex.Message}"
+                    Description = ex.Message,
+                    StatusCode = HttpStatusCode.InternalServerError,  
                 };
             }
         }
@@ -194,7 +194,7 @@ namespace AnimeList.Services.Services
                 {
                     AnimeId = animeId,
                     ProfileId = userId,
-                    AnimeStatus = Domain.Enum.AnimeListStatus.WantToWatch
+                    AnimeStatus = Domain.Enums.AnimeListStatus.WantToWatch
                 };
 
                 _unitOfWork.GetRepository<UserAnimeList>().Insert(userAnime);

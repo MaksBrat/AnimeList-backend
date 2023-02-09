@@ -3,7 +3,6 @@ using AnimeList.Domain.RequestModels;
 using AnimeList.Domain.Response;
 using AnimeList.Domain.ResponseModels.Profile;
 using Microsoft.AspNetCore.Http;
-using System.Net;
 
 namespace AnimeList.Services.Interfaces
 {

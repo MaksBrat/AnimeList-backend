@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AnimeList.Domain.Enum
+namespace AnimeList.Domain.Enums
 {   
     //general anime status
     public enum AnimeStatus

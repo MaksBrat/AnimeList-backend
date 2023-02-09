@@ -1,5 +1,4 @@
 ﻿using AnimeList.Domain.Entity.Animes;
-using AnimeList.Domain.Enum;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;

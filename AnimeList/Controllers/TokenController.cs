@@ -22,8 +22,6 @@ namespace AnimeList.Controllers
         [Route("refresh")]
         public async Task<IActionResult> Refresh(TokenRequestModel model)
         {
-            var _bearer_token = Request.Headers[HeaderNames.Authorization].ToString().Replace("Bearer ", "");
-            var Name = User.Identity.Name;
             var response = await _jwtService.RefreshToken(model);
             if(response.StatusCode == System.Net.HttpStatusCode.OK)
             {

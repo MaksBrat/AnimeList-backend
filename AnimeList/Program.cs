@@ -25,7 +25,7 @@ builder.Services.InitializeServices();
 builder.Services.AddHttpContextAccessor();
 /*builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();*/
 
-builder.Services.AddSwaggerGen(options =>
+/*builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
     {
@@ -36,7 +36,7 @@ builder.Services.AddSwaggerGen(options =>
     });
 
     options.OperationFilter<SecurityRequirementsOperationFilter>();
-});
+});*/
 
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -94,11 +94,11 @@ DbInitializer.Initialize(context);
 
 app.UseStaticFiles();
 
-if (app.Environment.IsDevelopment())
+/*if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+}*/
 
 app.UseCors("AllowAngularClient");
 

@@ -1,6 +1,5 @@
 ﻿using AnimeList.Domain.Entity.Account;
 using AnimeList.Domain.Entity.Animes;
-using AnimeList.Domain.Enum;
 using AnimeList.Domain.ResponseModel;
 using System;
 using System.Collections.Generic;

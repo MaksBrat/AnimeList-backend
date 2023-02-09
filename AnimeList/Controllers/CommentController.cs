@@ -1,39 +1,42 @@
-﻿using AnimeList.Common.Filters;
+﻿
 using AnimeList.Domain.RequestModels;
-using AnimeList.Domain.ResponseModel;
 using AnimeList.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using System.Net;
+using AnimeList.Domain.RequestModels.AnimeNews;
+using AnimeList.Common.Extentions;
 
 namespace AnimeList.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AnimeController : ControllerBase
-    {   
-        private readonly IAnimeService _animeService;
+    public class CommentController : ControllerBase
+    {
+        private readonly ICommentService _commentService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private int _userId;
 
-        public AnimeController(IAnimeService animeService)
+        public CommentController(ICommentService commentService, IHttpContextAccessor httpContextAccessor)
         {
-            _animeService = animeService;
-        }
+            _commentService = commentService;
+            _httpContextAccessor = httpContextAccessor;
 
-        [HttpGet("getAll")]
-        public async Task<IActionResult> GetAllAnimeWithGenres([FromQuery] AnimeFilter filter)
-        {
-            var response = await _animeService.GetAll(filter);
-            if (response.StatusCode == HttpStatusCode.OK)
+            var userId = _httpContextAccessor.HttpContext.User.GetUserId();
+            if (userId != null)
             {
-                return Ok(response.Data);
+                _userId = Int32.Parse(userId);
             }
-            return new BadRequestObjectResult(new { Message = response.Description });
+            else
+            {
+                _userId = 0;
+            }   
         }
 
         [HttpPost("create")]
-        public IActionResult Create([FromBody] AnimeRequestModel model)
+        public IActionResult Create([FromBody] CommentRequestModel model)
         {
-            var response = _animeService.Create(model);
+            var response = _commentService.Create(model, _userId);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(response.Data);
@@ -44,7 +47,18 @@ namespace AnimeList.Controllers
         [HttpPost("get/{id}")]
         public IActionResult Get([FromRoute] int id)
         {
-            var response = _animeService.Get(id);
+            var response = _commentService.Get(id);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                return Ok(response.Data);
+            }
+            return new BadRequestObjectResult(new { Message = response.Description });
+        }
+
+        [HttpGet("getAll/{newsId}")]
+        public async Task<IActionResult> GetAllAsync([FromRoute] int newsId)
+        {
+            var response = await _commentService.GetAll(newsId);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(response.Data);
@@ -53,9 +67,9 @@ namespace AnimeList.Controllers
         }
 
         [HttpPost("edit")]
-        public IActionResult Edit([FromBody] AnimeRequestModel model)
+        public IActionResult Edit([FromForm] CommentRequestModel model)
         {
-            var response = _animeService.Edit(model);
+            var response = _commentService.Edit(model);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(response.Data);
@@ -66,7 +80,7 @@ namespace AnimeList.Controllers
         [HttpDelete("delete/{id}")]
         public IActionResult Delete([FromRoute] int id)
         {
-            var response = _animeService.Delete(id);
+            var response = _commentService.Delete(id);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(response.Data);

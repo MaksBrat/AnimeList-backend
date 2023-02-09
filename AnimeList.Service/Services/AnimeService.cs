@@ -1,21 +1,13 @@
-﻿using AnimeList.Common.Constants;
-using AnimeList.Common.Extentions;
-using AnimeList.Common.Utitlities;
+﻿using AnimeList.Common.Filters;
 using AnimeList.DAL.Interfaces;
 using AnimeList.Domain.Entity.Animes;
 using AnimeList.Domain.Entity.Genres;
-using AnimeList.Domain.Enum;
 using AnimeList.Domain.RequestModels;
-using AnimeList.Domain.RequestModels.SearchAnime;
 using AnimeList.Domain.Response;
 using AnimeList.Domain.ResponseModel;
-using AnimeList.Services.Extentions;
 using AnimeList.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Globalization;
-using System.Linq.Expressions;
 using System.Net;
 
 namespace AnimeList.Services.Services
@@ -30,70 +22,31 @@ namespace AnimeList.Services.Services
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
-
-        public IBaseResponse<bool> Delete(int id)
+             
+        public IBaseResponse<AnimeResponseModel> Create(AnimeRequestModel model)
         {
             try
             {
-                _unitOfWork.GetRepository<Anime>().Delete(id);
+                var anime = _mapper.Map<Anime>(model);
+
+                _unitOfWork.GetRepository<Anime>().Insert(anime);
                 _unitOfWork.SaveChanges();
 
-                return new BaseResponse<bool>
+                var animeGenres = new List<AnimeGenre>();
+                foreach (var animegenre in model.Genres)
                 {
-                    Data = true,
-                    StatusCode = HttpStatusCode.OK
-                };
-
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponse<bool>
-                {
-                    Description = $"Error Delete: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
-        }
-
-        public IBaseResponse<AnimeResponseModel> Edit(AnimeRequestModel model)
-        {
-            try
-            {
-                var anime = _unitOfWork.GetRepository<Anime>().GetFirstOrDefault(
-                    predicate: x => x.Id == model.Id,
-                    include: i => i
-                            .Include(x => x.AnimeGenres)
-                                .ThenInclude(x => x.Genre));
-
-                if (anime == null)
-                {
-                    return new BaseResponse<AnimeResponseModel>
-                    {
-                        Description = "Anime not found",
-                        StatusCode = HttpStatusCode.NotFound
-                    };
-                }              
-
-                 _mapper.Map(model, anime);
-
-                //Change genres
-                var repo = _unitOfWork.GetRepository<AnimeGenre>();
-                for (int i = 0; i < anime.AnimeGenres.Count; i++)
-                {
-                    repo.Delete(anime.AnimeGenres.ToList()[i]);
+                    animeGenres.Add(
+                        new AnimeGenre()
+                        {
+                            AnimeId = anime.Id,
+                            GenreId = _unitOfWork.GetRepository<Genre>()
+                                .GetFirstOrDefault(
+                                    predicate:
+                                        x => x.Name == animegenre.Name)!.Id
+                        });
                 }
-               
-                var newGenres = new List<AnimeGenre>();
-                foreach (var genre in model.Genres)
-                {   
-                    var Genre = _unitOfWork.GetRepository<Genre>().GetFirstOrDefault(
-                        predicate: x => x.Id == genre.Id);
 
-                    newGenres.Add(new AnimeGenre { AnimeId = anime.Id, GenreId = genre.Id, Genre = Genre });                                                       
-                }
-                repo.Insert(newGenres);
-
-                _unitOfWork.GetRepository<Anime>().Update(anime);
+                _unitOfWork.GetRepository<AnimeGenre>().Insert(animeGenres);
                 _unitOfWork.SaveChanges();
 
                 var response = _mapper.Map<AnimeResponseModel>(anime);
@@ -103,18 +56,16 @@ namespace AnimeList.Services.Services
                     Data = response,
                     StatusCode = HttpStatusCode.OK
                 };
-
             }
             catch (Exception ex)
             {
                 return new BaseResponse<AnimeResponseModel>
                 {
-                    Description = $"Error [EditAnime]: {ex.Message}",
+                    Description = $"Error [CreateAnime]: {ex.Message}",
                     StatusCode = HttpStatusCode.InternalServerError
                 };
             }
         }
-
         public IBaseResponse<AnimeResponseModel> Get(int id)
         {   
             try
@@ -153,124 +104,20 @@ namespace AnimeList.Services.Services
                 };
             }
         }
-
-        public IBaseResponse<AnimeResponseModel> Create(AnimeRequestModel model)
-        {
-            try
-            {   
-                var anime = _mapper.Map<Anime>(model);
-               
-                _unitOfWork.GetRepository<Anime>().Insert(anime);
-                _unitOfWork.SaveChanges();
-
-                var animeGenres = new List<AnimeGenre>();
-                foreach(var animegenre in model.Genres)
-                {
-                    animeGenres.Add(
-                        new AnimeGenre()
-                        {
-                            AnimeId = anime.Id,
-                            GenreId = _unitOfWork.GetRepository<Genre>()
-                                .GetFirstOrDefault(
-                                    predicate:
-                                        x => x.Name == animegenre.Name)!.Id
-                        });
-                }
-
-                _unitOfWork.GetRepository<AnimeGenre>().Insert(animeGenres);
-                _unitOfWork.SaveChanges();
-
-                var respone = _mapper.Map<AnimeResponseModel>(anime);
-
-                return new BaseResponse<AnimeResponseModel>
-                {
-                    Data = respone,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponse<AnimeResponseModel>
-                {
-                    Description = $"Error [CreateAnime]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
-        }
-
-        public async Task<IBaseResponse<List<AnimeResponseModel>>> GetAll(Filter filter)
+        public async Task<IBaseResponse<List<AnimeResponseModel>>> GetAll(AnimeFilter filter)
         {
             try
             {
-                Expression<Func<Anime, bool>>? predicate = null;
-                Func<IQueryable<Anime>, IOrderedQueryable<Anime>>? orderBy = null;
+                filter.Filter();
 
-                if (filter.SearchQuery != null)
-                {
-                    predicate = x => x.Title.Contains(filter.SearchQuery);                  
-                }
-
-                if (filter.AnimeType != null)
-                {
-                    var animeType = Enum.Parse<AnimeType>(filter.AnimeType);
-                    Expression<Func<Anime, bool>> predicateAnimeType = x =>x.AnimeType == animeType;
-                    predicate = predicate == null ? predicateAnimeType : predicate.And(predicateAnimeType);
-                }
-
-                if (filter.AnimeStatus != null)
-                {
-                    var animeStatus = Enum.Parse<AnimeStatus>(filter.AnimeStatus);
-                    Expression<Func<Anime, bool>> predicateAnimeStatus = x => x.AnimeStatus == animeStatus;
-                    predicate = predicate == null ? predicateAnimeStatus : predicate.And(predicateAnimeStatus);
-                }
-
-                if (filter.Genres != null)
-                {
-                    var genres = filter.Genres.Where(x => x.Checked == true).Select(x => x.Name).ToList();
-                    if (genres.Count != 0)
-                    {
-                        Expression<Func<Anime, bool>> predicateGenres = a => a.AnimeGenres.Where(ag => genres.Contains(ag.Genre.Name)).Count() == genres.Count();
-                        predicate = predicate == null ? predicateGenres : predicate.And(predicateGenres);
-                    }
-                }
-
-                if (filter.OrderBy != null)
-                {
-                    ParameterExpression param = Expression.Parameter(typeof(Anime), "a");
-                    Expression property = null;
-
-                    switch (filter.OrderBy)
-                    {
-                        case "Title":
-                            property = Expression.Property(param, nameof(Anime.Title));
-                            break;
-                        case "Rating":
-                            property = Expression.Property(param, nameof(Anime.Rating));
-                            break;
-                        case "ReleaseDate":
-                            property = Expression.Property(param, nameof(Anime.ReleaseDate));
-                            break;
-                    }
-                    var lambda = Expression.Lambda<Func<Anime, object>>(Expression.Convert(property, typeof(object)), param);
-
-                    if (filter.AscOrDesc == "ASC")
-                    {
-                        orderBy = x => x.OrderBy(lambda);
-                    }
-                    else if(filter.AscOrDesc == "DESC")
-                    { 
-                        orderBy = x => x.OrderByDescending(lambda);
-                    }
-                }
-                
                 var anime = await _unitOfWork.GetRepository<Anime>().GetAllAsync(
-                    predicate: predicate,
+                    predicate: filter.Predicate,
                     include: x => x
                         .Include(x => x.AnimeGenres)
                             .ThenInclude(x => x.Genre),
-                    orderBy: orderBy,
+                    orderBy: filter.OrderByQuery,
                     take: filter.Take);
-               
+
                 var response = _mapper.Map<List<AnimeResponseModel>>(anime);
 
                 return new BaseResponse<List<AnimeResponseModel>>
@@ -287,6 +134,88 @@ namespace AnimeList.Services.Services
                     StatusCode = HttpStatusCode.InternalServerError
                 };
             }
-        }       
+        }
+        public IBaseResponse<AnimeResponseModel> Edit(AnimeRequestModel model)
+        {
+            try
+            {
+                var anime = _unitOfWork.GetRepository<Anime>().GetFirstOrDefault(
+                    predicate: x => x.Id == model.Id,
+                    include: i => i
+                            .Include(x => x.AnimeGenres)
+                                .ThenInclude(x => x.Genre));
+
+                if (anime == null)
+                {
+                    return new BaseResponse<AnimeResponseModel>
+                    {
+                        Description = "Anime not found",
+                        StatusCode = HttpStatusCode.NotFound
+                    };
+                }
+
+                _mapper.Map(model, anime);
+
+                //Change genres
+                var repo = _unitOfWork.GetRepository<AnimeGenre>();
+                for (int i = 0; i < anime.AnimeGenres.Count; i++)
+                {
+                    repo.Delete(anime.AnimeGenres.ToList()[i]);
+                }
+
+                var newGenres = new List<AnimeGenre>();
+                foreach (var genre in model.Genres)
+                {
+                    var Genre = _unitOfWork.GetRepository<Genre>().GetFirstOrDefault(
+                        predicate: x => x.Id == genre.Id);
+
+                    newGenres.Add(new AnimeGenre { AnimeId = anime.Id, GenreId = genre.Id, Genre = Genre });
+                }
+                repo.Insert(newGenres);
+
+                _unitOfWork.GetRepository<Anime>().Update(anime);
+                _unitOfWork.SaveChanges();
+
+                var response = _mapper.Map<AnimeResponseModel>(anime);
+
+                return new BaseResponse<AnimeResponseModel>
+                {
+                    Data = response,
+                    StatusCode = HttpStatusCode.OK
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse<AnimeResponseModel>
+                {
+                    Description = $"Error [EditAnime]: {ex.Message}",
+                    StatusCode = HttpStatusCode.InternalServerError
+                };
+            }
+
+        }
+        public IBaseResponse<bool> Delete(int id)
+        {
+            try
+            {
+                _unitOfWork.GetRepository<Anime>().Delete(id);
+                _unitOfWork.SaveChanges();
+
+                return new BaseResponse<bool>
+                {
+                    Data = true,
+                    StatusCode = HttpStatusCode.OK
+                };
+
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse<bool>
+                {
+                    Description = $"Error Delete: {ex.Message}",
+                    StatusCode = HttpStatusCode.InternalServerError
+                };
+            }
+        }
     }
 }

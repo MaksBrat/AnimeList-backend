@@ -2,19 +2,15 @@
 using AnimeList.Domain.RequestModels.Account;
 using AnimeList.Domain.Response;
 using AnimeList.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
-using System.Web.Providers.Entities;
-using Newtonsoft.Json.Linq;
 using AnimeList.Domain.ResponseModels.Account;
 
 namespace AnimeList.Services.Services
-{   
+{
     public class AccountService : IAccountService
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -81,7 +77,6 @@ namespace AnimeList.Services.Services
                 };
             }
         }
-
         public async Task<IBaseResponse<AuthenticatedResponse>> Login(LoginModel model)
         {
             try
@@ -119,7 +114,8 @@ namespace AnimeList.Services.Services
                         Data = new AuthenticatedResponse
                         {
                             Token = accessToken,
-                            RefreshToken = refreshToken
+                            RefreshToken = refreshToken,
+                            UserId = user.Id
                         },
                         StatusCode = HttpStatusCode.OK
                     };

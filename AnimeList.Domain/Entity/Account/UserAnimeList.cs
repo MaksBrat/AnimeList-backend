@@ -1,5 +1,6 @@
 ﻿using AnimeList.Domain.Entity.Animes;
-using AnimeList.Domain.Enum;
+
+using AnimeList.Domain.Enums;
 
 namespace AnimeList.Domain.Entity.Account
 {

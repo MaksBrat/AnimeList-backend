@@ -20,6 +20,8 @@ namespace AnimeList
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IAnimeService, AnimeService>();
+            services.AddScoped<INewsService, NewsService>();
+            services.AddScoped<ICommentService, CommentService>();
         }
     }
 }

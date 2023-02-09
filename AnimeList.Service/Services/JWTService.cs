@@ -1,6 +1,5 @@
 ﻿using AnimeList.DAL.Interfaces;
 using AnimeList.Domain.Entity.Account;
-using AnimeList.Domain.Enum;
 using AnimeList.Domain.RequestModels;
 using AnimeList.Domain.Response;
 using AnimeList.Domain.ResponseModels.Account;
@@ -47,7 +46,6 @@ namespace AnimeList.Services.Services
             var token = new JwtSecurityTokenHandler().WriteToken(tokenOptions);
             return token;
         }
-
         public string GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
@@ -56,8 +54,7 @@ namespace AnimeList.Services.Services
                 rng.GetBytes(randomNumber);
                 return Convert.ToBase64String(randomNumber);
             }
-        }
-        
+        }   
         public ClaimsPrincipal? GetPrincipalFromExpiredToken(string? token)
         {
             var tokenValidationParameters = new TokenValidationParameters
@@ -84,7 +81,6 @@ namespace AnimeList.Services.Services
                 
             return principal;
         }
-
         public async Task<IBaseResponse<AuthenticatedResponse>> RefreshToken(TokenRequestModel tokenModel)
         {   
             if(tokenModel == null)

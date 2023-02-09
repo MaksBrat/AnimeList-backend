@@ -23,9 +23,17 @@ namespace AnimeList.Controllers
             IHttpContextAccessor httpContextAccessor)
         {
             _profileService = profileService;
-            _httpContextAccessor = httpContextAccessor;          
+            _httpContextAccessor = httpContextAccessor;
 
-            _userId = Int32.Parse(_httpContextAccessor.HttpContext.User.GetUserId());
+            var userId = _httpContextAccessor.HttpContext.User.GetUserId();
+            if(userId != null)
+            {
+                _userId = Int32.Parse(userId);
+            }
+            else
+            {
+                _userId = 0;
+            }
         }
 
         [HttpPost("edit")]
