@@ -41,7 +41,7 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
-        [HttpPost("get/{id}")]
+        [HttpGet("get/{id}")]
         public IActionResult Get([FromRoute] int id)
         {
             var response = _animeService.Get(id);

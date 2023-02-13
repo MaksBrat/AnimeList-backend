@@ -10,10 +10,8 @@ using System.Web.Http;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Swashbuckle.AspNetCore.Filters;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.FileProviders;
 using AnimeList.Services;
+using AnimeList.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,20 +21,6 @@ builder.Services.InitializeRepositories();
 builder.Services.InitializeServices();
 
 builder.Services.AddHttpContextAccessor();
-/*builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();*/
-
-/*builder.Services.AddSwaggerGen(options =>
-{
-    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
-    {
-        Description = "Standard Authorization header using the Bearer scheme (\"bearer {token}\")",
-        In = ParameterLocation.Header,
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey
-    });
-
-    options.OperationFilter<SecurityRequirementsOperationFilter>();
-});*/
 
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -72,6 +56,9 @@ builder.Services.AddMvc();
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
+//SignalR
+builder.Services.AddSignalR();
+
 //AutoMapper
 var config = new AutoMapper.MapperConfiguration(cfg =>
 {
@@ -92,22 +79,18 @@ var scope = app.Services.CreateScope();
 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 DbInitializer.Initialize(context);
 
+app.UseDefaultFiles();
 app.UseStaticFiles();
-
-/*if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}*/
 
 app.UseCors("AllowAngularClient");
 
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

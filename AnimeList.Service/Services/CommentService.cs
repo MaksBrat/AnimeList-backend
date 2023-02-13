@@ -87,7 +87,7 @@ namespace AnimeList.Services.Services
         public async Task<IBaseResponse<List<CommentResponseModel>>> GetAll(int newdId)
         {
             try
-            {
+            {   
                 var comments = await _unitOfWork.GetRepository<Comment>().GetAllAsync(
                     predicate: x => x.NewsId == newdId,
                     include: i => i

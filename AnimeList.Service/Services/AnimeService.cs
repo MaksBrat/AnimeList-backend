@@ -74,8 +74,7 @@ namespace AnimeList.Services.Services
                     predicate: x => x.Id == id,
                     include: i => i
                             .Include(x => x.AnimeGenres)
-                                .ThenInclude(x => x.Genre)
-                                    .ThenInclude(x => x.Name));
+                                .ThenInclude(x => x.Genre));
 
                 if (anime == null)
                 {

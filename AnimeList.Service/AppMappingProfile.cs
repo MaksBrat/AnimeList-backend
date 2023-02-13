@@ -1,12 +1,15 @@
 ﻿using AnimeList.Common.Constants;
 using AnimeList.Common.Utitlities;
+using AnimeList.Domain.Chat;
 using AnimeList.Domain.Entity.Account;
 using AnimeList.Domain.Entity.AnimeNews;
 using AnimeList.Domain.Entity.Animes;
 using AnimeList.Domain.RequestModels;
 using AnimeList.Domain.RequestModels.AnimeNews;
+using AnimeList.Domain.RequestModels.Chat;
 using AnimeList.Domain.ResponseModel;
 using AnimeList.Domain.ResponseModels.AnimeNews;
+using AnimeList.Domain.ResponseModels.Chat;
 using AnimeList.Domain.ResponseModels.Profile;
 using System.Globalization;
 
@@ -68,6 +71,19 @@ namespace AnimeList.Services
             CreateMap<CommentRequestModel, Comment>()
                 .ForMember(dest => dest.DateCreated, opt => opt.MapFrom(src => DateTime.Now));
 
+
+            #endregion
+
+            #region Message
+
+            CreateMap<Message, MessageResponseModel>()
+                .ForMember(dest => dest.Author, opt => opt.MapFrom(src => src.Author.Profile.Name))
+                .ForMember(dest => dest.AuthorId, opt => opt.MapFrom(src => src.Author.Id))
+                .ForMember(dest => dest.AuthorAvatar, opt => opt.MapFrom(src => src.Author.Profile.Avatar))
+                .ForMember(dest => dest.DateCreated, opt => opt.MapFrom(src => src.DateCreated.ToString("yyyy-MM-dd"))); ;
+
+            CreateMap<MessageRequestModel,  Message>()
+                .ForMember(dest => dest.DateCreated, opt => opt.MapFrom(src => DateTime.Now));
 
             #endregion
         }
