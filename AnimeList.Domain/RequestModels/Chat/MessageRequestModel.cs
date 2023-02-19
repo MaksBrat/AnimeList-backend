@@ -8,8 +8,6 @@ namespace AnimeList.Domain.RequestModels.Chat
 {
     public class MessageRequestModel
     {
-        public int AuthorId { get; set; }
         public string Text { get; set; }
-
     }
 }

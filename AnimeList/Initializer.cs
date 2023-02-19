@@ -22,6 +22,7 @@ namespace AnimeList
             services.AddScoped<IAnimeService, AnimeService>();
             services.AddScoped<INewsService, NewsService>();
             services.AddScoped<ICommentService, CommentService>();
+            services.AddScoped<IMessageService, MessageService>();
         }
     }
 }

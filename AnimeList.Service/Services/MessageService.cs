@@ -1,30 +1,39 @@
 ﻿using AnimeList.DAL.Interfaces;
 using AnimeList.Domain.Chat;
+using AnimeList.Domain.Entity.Account;
 using AnimeList.Domain.Entity.AnimeNews;
+using AnimeList.Domain.Pagination;
 using AnimeList.Domain.RequestModels.Chat;
 using AnimeList.Domain.Response;
 using AnimeList.Domain.ResponseModels.Chat;
+using AnimeList.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 using System.Net;
 
 namespace AnimeList.Services.Services
 {
-    public class MessageService
+    public class MessageService : IMessageService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
         public MessageService(IUnitOfWork unitOfWork, IMapper mapper)
         {
-            _unitOfWork = unitOfWork;
+            _unitOfWork = unitOfWork; 
             _mapper = mapper;
         }
 
         public IBaseResponse<MessageResponseModel> Create(MessageRequestModel model, int userId)
         {
             try
-            {
+            {           
+                var userProfile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
+                    predicate: x => x.UserId == userId,
+                    include: i => i
+                        .Include(x => x.FileModel));
+
                 var message = _mapper.Map<Message>(model);
                 message.AuthorId = userId;
 
@@ -32,6 +41,8 @@ namespace AnimeList.Services.Services
                 _unitOfWork.SaveChanges();
 
                 var response = _mapper.Map<MessageResponseModel>(message);
+                response.Author = userProfile.Name;
+                response.AvatarUrl = userProfile.FileModel.Path;
 
                 return new BaseResponse<MessageResponseModel>
                 {
@@ -84,21 +95,37 @@ namespace AnimeList.Services.Services
                 };
             }
         }
-        /*public IBaseResponse<List<MessageResponseModel>> GetAll()
+        public async Task<IBaseResponse<List<MessageResponseModel>>> GetChatHistory(int pageIndex, int pageSize)
         {
             try
             {
+                var messageList = await _unitOfWork.GetRepository<Message>().GetPagedListAsync(
+                    orderBy: x => x.OrderByDescending(x => x.DateCreated),
+                    include: x => x
+                        .Include(x => x.Author)
+                            .ThenInclude(x => x.Profile)
+                                .ThenInclude(x => x.FileModel),
+                    pageIndex: pageIndex,
+                    pageSize: pageSize
+                );
 
+                var response = _mapper.Map<List<MessageResponseModel>>(messageList.Items);
+
+                return new BaseResponse<List<MessageResponseModel>>
+                {
+                    Data = response,
+                    StatusCode = HttpStatusCode.OK
+                };
             }
             catch (Exception ex)
             {
                 return new BaseResponse<List<MessageResponseModel>>
                 {
-                    Description = $"Error [GetAllMessage]: {ex.Message}",
+                    Description = $"Error [GetChatHistory]: {ex.Message}",
                     StatusCode = HttpStatusCode.InternalServerError
                 };
             }
-        }*/
+        }
         public IBaseResponse<bool> Delete(int id)
         {
             try
@@ -122,5 +149,6 @@ namespace AnimeList.Services.Services
                 };
             }
         }
+
     }
 }

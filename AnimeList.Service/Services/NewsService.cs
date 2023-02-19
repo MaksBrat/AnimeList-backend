@@ -135,7 +135,7 @@ namespace AnimeList.Services.Services
                 {
                     return new BaseResponse<NewsResponseModel>
                     {
-                        Description = "ews not found",
+                        Description = "News not found",
                         StatusCode = HttpStatusCode.NotFound
                     };
                 }
@@ -193,6 +193,5 @@ namespace AnimeList.Services.Services
                 };
             }
         }
-
     }
 }

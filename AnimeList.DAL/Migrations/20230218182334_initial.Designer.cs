@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AnimeList.DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230206200101_init")]
-    partial class init
+    [Migration("20230218182334_initial")]
+    partial class initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -23,6 +23,31 @@ namespace AnimeList.DAL.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+
+            modelBuilder.Entity("AnimeList.Domain.Chat.Message", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("Messages");
+                });
 
             modelBuilder.Entity("AnimeList.Domain.Entity.Account.ApplicationRole", b =>
                 {
@@ -168,12 +193,11 @@ namespace AnimeList.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("Age")
+                    b.Property<int?>("Age")
                         .HasColumnType("int");
 
-                    b.Property<byte[]>("Avatar")
-                        .IsRequired()
-                        .HasColumnType("varbinary(max)");
+                    b.Property<int>("FileModelId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -187,6 +211,9 @@ namespace AnimeList.DAL.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FileModelId")
+                        .IsUnique();
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -242,8 +269,9 @@ namespace AnimeList.DAL.Migrations
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Title")
-                        .HasColumnType("int");
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -306,6 +334,27 @@ namespace AnimeList.DAL.Migrations
                     b.HasIndex("GenreId");
 
                     b.ToTable("AnimeGenres");
+                });
+
+            modelBuilder.Entity("AnimeList.Domain.Entity.FileModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FileModels");
                 });
 
             modelBuilder.Entity("AnimeList.Domain.Entity.Genres.Genre", b =>
@@ -428,6 +477,17 @@ namespace AnimeList.DAL.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("AnimeList.Domain.Chat.Message", b =>
+                {
+                    b.HasOne("AnimeList.Domain.Entity.Account.ApplicationUser", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
             modelBuilder.Entity("AnimeList.Domain.Entity.Account.UserAnimeList", b =>
                 {
                     b.HasOne("AnimeList.Domain.Entity.Animes.Anime", "Anime")
@@ -449,11 +509,19 @@ namespace AnimeList.DAL.Migrations
 
             modelBuilder.Entity("AnimeList.Domain.Entity.Account.UserProfile", b =>
                 {
+                    b.HasOne("AnimeList.Domain.Entity.FileModel", "FileModel")
+                        .WithOne("UserProfile")
+                        .HasForeignKey("AnimeList.Domain.Entity.Account.UserProfile", "FileModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("AnimeList.Domain.Entity.Account.ApplicationUser", "User")
                         .WithOne("Profile")
                         .HasForeignKey("AnimeList.Domain.Entity.Account.UserProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("FileModel");
 
                     b.Navigation("User");
                 });
@@ -577,6 +645,12 @@ namespace AnimeList.DAL.Migrations
             modelBuilder.Entity("AnimeList.Domain.Entity.Animes.Anime", b =>
                 {
                     b.Navigation("AnimeGenres");
+                });
+
+            modelBuilder.Entity("AnimeList.Domain.Entity.FileModel", b =>
+                {
+                    b.Navigation("UserProfile")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("AnimeList.Domain.Entity.Genres.Genre", b =>

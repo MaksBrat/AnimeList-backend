@@ -16,6 +16,7 @@ namespace AnimeList.Controllers
     {
         private readonly INewsService _newsService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+
         private int _userId;
 
         public NewsController(INewsService newsService, IHttpContextAccessor httpContextAccessor)

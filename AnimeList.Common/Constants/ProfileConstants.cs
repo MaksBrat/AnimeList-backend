@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace AnimeList.Common.Constants
 {
-    public class AnimeConstans
+    public class ProfileConstants
     {
-        public const string POSTER_URL = "https://cdn-icons-png.flaticon.com/512/2589/2589327.png";
+        public const string DEFAULT_IMAGE_PATH = "user-default-image";
     }
 }

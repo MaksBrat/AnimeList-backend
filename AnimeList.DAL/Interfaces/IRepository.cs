@@ -7,6 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using AnimeList.Domain.Pagination;
 
 namespace AnimeList.DAL.Interfaces
 {
@@ -88,6 +89,24 @@ namespace AnimeList.DAL.Interfaces
             int take = 0);
 
         #endregion
+
+        #region PagedList
+
+        public Task<IPagedList<TEntity>> GetPagedListAsync(
+            Expression<Func<TEntity, bool>>? predicate = null,
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null,
+            int pageIndex = 0,
+            int pageSize = 20);
+
+        #endregion
+
+        #region Get
+
+        public TEntity GetById(int id);
+
+        #endregion
+
 
         #region Insert
         /// <summary>

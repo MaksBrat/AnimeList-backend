@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AnimeList.Common\AnimeList.Common.csproj" />
     <ProjectReference Include="..\AnimeList.Domain\AnimeList.Domain.csproj" />
   </ItemGroup>
 

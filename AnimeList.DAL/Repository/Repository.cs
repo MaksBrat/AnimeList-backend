@@ -1,15 +1,9 @@
 ﻿using AnimeList.DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using AnimeList.Common.Extensions;
+using AnimeList.Domain.Pagination;
 
 namespace AnimeList.DAL.Repository
 {
@@ -58,6 +52,30 @@ namespace AnimeList.DAL.Repository
             }
 
             return await query.ToListAsync();
+        }
+
+        public async Task<IPagedList<TEntity>> GetPagedListAsync(
+            Expression<Func<TEntity, bool>>? predicate = null,
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null,
+            int pageIndex = 0,
+            int pageSize = 20)
+        {
+            IQueryable<TEntity> query = _dbSet;
+         
+            if (include is not null)
+            {
+                query = include(query);
+            }
+
+            if (predicate is not null)
+            {
+                query = query.Where(predicate);
+            }
+
+            return orderBy is not null
+                ? await orderBy(query).ToPagedListAsync(pageIndex, pageSize)
+                : await query.ToPagedListAsync(pageIndex, pageSize);
         }
 
         public TEntity? GetFirstOrDefault(
@@ -150,11 +168,16 @@ namespace AnimeList.DAL.Repository
                 : await query.Select(selector).FirstOrDefaultAsync();
         }
 
+        public TEntity GetById(int id)
+        {
+            return _dbSet.Find(id);
+        }
+
         public TEntity Insert(TEntity entity) => _dbSet.Add(entity).Entity;
         public void Insert(IEnumerable<TEntity> entities) => _dbSet.AddRange(entities);
 
         public void Update(TEntity entity) => _dbSet.Update(entity);
-
+        
         public void Delete(int id)
         {
             var entity = _dbSet.Find(id);

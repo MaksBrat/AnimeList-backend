@@ -1,4 +1,6 @@
-﻿using AnimeList.Domain.Entity.Account;
+﻿using AnimeList.Domain.Chat;
+using AnimeList.Domain.Entity;
+using AnimeList.Domain.Entity.Account;
 using AnimeList.Domain.Entity.AnimeNews;
 using AnimeList.Domain.Entity.Animes;
 using AnimeList.Domain.Entity.Genres;
@@ -23,6 +25,8 @@ namespace AnimeList.DAL
         public DbSet<UserAnimeList> UserAnimeLists { get; set; }
         public DbSet<News> News { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<Message> Messages { get; set; }
+        public DbSet<FileModel> FileModels { get; set; } 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -48,6 +52,11 @@ namespace AnimeList.DAL
                 .HasMany(x => x.AnimeList)
                 .WithOne(x => x.Profile)
                 .IsRequired();
+
+            modelBuilder.Entity<FileModel>()
+                .HasOne(x => x.UserProfile)
+                .WithOne(x => x.FileModel)
+                .HasForeignKey<UserProfile>(x => x.FileModelId);
 
             modelBuilder.Entity<AnimeGenre>()
                 .HasKey(ag => new { ag.AnimeId, ag.GenreId });

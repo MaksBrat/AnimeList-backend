@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace AnimeList.Domain.RequestModels
 {
     public class ProfileRequestModel
-    {
+    {   
         public string Name { get; set; }
         public int Age { get; set; }
     }

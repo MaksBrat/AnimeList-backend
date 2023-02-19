@@ -12,7 +12,7 @@ namespace AnimeList.Domain.ResponseModels.Chat
         public string Text { get; set; }
         public string Author { get; set; }
         public int AuthorId { get; set; }
-        public byte[] AuthorAvatar { get; set; }
-        public string DateCreated { get; set; }
+        public string AvatarUrl { get; set; }
+        public string DateCreated { get; set; } 
     }
 }

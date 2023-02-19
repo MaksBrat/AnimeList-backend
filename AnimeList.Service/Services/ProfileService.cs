@@ -12,6 +12,10 @@ using System.Diagnostics;
 using AnimeList.Common.Utitlities;
 using AnimeList.Common.Extentions;
 using AnimeList.Domain.Enums;
+using AnimeList.Domain.Entity;
+using Microsoft.AspNetCore.Hosting;
+using AnimeList.Domain.ResponseModels.Chat;
+using AnimeList.Common.Constants;
 
 namespace AnimeList.Services.Services
 {
@@ -19,112 +23,163 @@ namespace AnimeList.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-
-        public ProfileService(IUnitOfWork unitOfWork, IMapper mapper)
+        private readonly IWebHostEnvironment _appEnvironment;
+        public ProfileService(IUnitOfWork unitOfWork, IMapper mapper, IWebHostEnvironment appEnvironment)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _appEnvironment = appEnvironment;
         }
 
         public IBaseResponse<UserProfileResponseModel> Edit(ProfileRequestModel model, int userId)
         {
-            var profile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
-            predicate: x => x.UserId == userId);
+            try
+            {
+                var profile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
+                    predicate: x => x.UserId == userId);
 
-            if (profile == null)
+                if (profile == null)
+                {
+                    return new BaseResponse<UserProfileResponseModel>
+                    {
+                        Description = "Profile not found"
+                    };
+                }
+
+                profile.Age = model.Age;
+                profile.Name = model.Name;
+
+                var response = new UserProfileResponseModel
+                {
+                    Age = profile.Age,
+                    Name = profile.Name,
+                    RegistratedAt = profile.RegistratedAt,
+                };
+
+                _unitOfWork.GetRepository<UserProfile>().Update(profile);
+                _unitOfWork.SaveChanges();
+
+                return new BaseResponse<UserProfileResponseModel>
+                {
+                    Data = response,
+                    StatusCode = HttpStatusCode.OK,
+                };
+            }
+            catch (Exception ex)
             {
                 return new BaseResponse<UserProfileResponseModel>
                 {
-                    Description = "Profile not found"
+                    Description = $"Error [Edit]: {ex.Message}",
+                    StatusCode = HttpStatusCode.InternalServerError
+                };
+            }          
+        }
+        public async Task<IBaseResponse<UserProfileResponseModel>> ChangeAvatar(IFormFile avatar, int userId)
+        {
+            try
+            {
+                var profile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
+                    predicate: x => x.UserId == userId,
+                    include: i => i
+                        .Include(x => x.FileModel));
+
+                if (profile == null)
+                {
+                    return new BaseResponse<UserProfileResponseModel>
+                    {
+                        Description = "Profile not found"
+                    };
+                }
+
+                var file = profile.FileModel;
+                
+                string oldPath = profile.FileModel?.Path;
+                string path = "/Images/" + avatar.FileName;
+
+                using (var fileStream = new FileStream(_appEnvironment.WebRootPath + path, FileMode.Create))
+                {
+                    await avatar.CopyToAsync(fileStream);
+                }
+
+                file.Path = path;
+                file.Name = avatar.FileName;
+
+                _unitOfWork.GetRepository<FileModel>().Update(file);
+                _unitOfWork.SaveChanges();
+
+                if (oldPath != ProfileConstants.DEFAULT_IMAGE_PATH)
+                {
+                    File.Delete(_appEnvironment.WebRootPath + oldPath);
+                }
+
+                var response = _mapper.Map<UserProfileResponseModel>(profile);
+
+                return new BaseResponse<UserProfileResponseModel>
+                {
+                    Data = response,
+                    StatusCode = HttpStatusCode.OK,
                 };
             }
-
-            profile.Age = model.Age;
-            profile.Name = model.Name;
-
-            var response = new UserProfileResponseModel
-            {
-                Age = profile.Age,
-                Name = profile.Name,
-                RegistratedAt = profile.RegistratedAt,
-                Avatar = profile.Avatar
-            }; 
-
-            _unitOfWork.GetRepository<UserProfile>().Update(profile);
-            _unitOfWork.SaveChanges();
-
-            return new BaseResponse<UserProfileResponseModel>
-            {
-                Data = response,
-                StatusCode = HttpStatusCode.OK,
-            };
-        }
-        public IBaseResponse<UserProfileResponseModel> ChangeAvatar(IFormFile avatar, int userId)
-        {
-            var profile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
-            predicate: x => x.UserId == userId);
-
-            if (profile == null)
+            catch (Exception ex)
             {
                 return new BaseResponse<UserProfileResponseModel>
                 {
-                    Description = "Profile not found"
+                    Description = $"Error [ChangeAvatar]: {ex.Message}",
+                    StatusCode = HttpStatusCode.InternalServerError
                 };
-            }
-
-            if (avatar != null)
-            {
-                profile.Avatar = ImageConverter.ImageToByteArray(avatar);
-            }
-
-            _unitOfWork.GetRepository<UserProfile>().Update(profile);
-            _unitOfWork.SaveChanges();
-
-            var response = new UserProfileResponseModel
-            {
-                Age = profile.Age,
-                Name = profile.Name,
-                RegistratedAt = profile.RegistratedAt,
-                Avatar = profile.Avatar
-            };
-
-            return new BaseResponse<UserProfileResponseModel>
-            {
-                Data = response,
-                StatusCode = HttpStatusCode.OK,
-            };
+            }    
         }
-        public async Task<IBaseResponse<UserProfile>> Create(ApplicationUser user)
+        public async Task<IBaseResponse<UserProfileResponseModel>> Create(ApplicationUser user)
         {
-            var profile = await _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefaultAsync(
+            try
+            {
+                var profile = await _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefaultAsync(
                 predicate: x => x.Id == user.Id);
 
-            if(profile != null)
-            {
-                return new BaseResponse<UserProfile>
+                if (profile != null)
                 {
-                    Description = "Profile already exists",
+                    return new BaseResponse<UserProfileResponseModel>
+                    {
+                        Description = "Profile already exists",
+                        StatusCode = HttpStatusCode.OK
+                    };
+                }
+
+                string path = "/Images/user-default-image.png";
+
+                var file = new FileModel { Name = "user-default-image", Path = path};
+
+                _unitOfWork.GetRepository<FileModel>().Insert(file);
+                _unitOfWork.SaveChanges();
+
+                profile = new UserProfile
+                {
+                    Name = $"User{UserIdExtensions.GetId:00000000}",
+                    Age = 100,
+                    RegistratedAt = DateTime.UtcNow,
+                    UserId = user.Id,
+                    FileModelId = file.Id
+                };
+
+                _unitOfWork.GetRepository<UserProfile>().Insert(profile);
+                _unitOfWork.SaveChanges();
+
+                var response = _mapper.Map<UserProfileResponseModel>(profile);
+
+                return new BaseResponse<UserProfileResponseModel>
+                {
+                    Data = response,
                     StatusCode = HttpStatusCode.OK
                 };
             }
-           
-            profile = new UserProfile
+            catch (Exception ex)
             {
-                Name = $"User{UserIdExtensions.GetId:00000000}",
-                Age = 100,
-                RegistratedAt = DateTime.Now,
-                UserId = user.Id,
-                Avatar = ImageConverter.SetDefaultImage("user-default-image.png")
-            };
-
-            _unitOfWork.GetRepository<UserProfile>().Insert(profile);
-            _unitOfWork.SaveChanges();
-
-            return new BaseResponse<UserProfile>
-            {
-                Data = profile,
-                StatusCode = HttpStatusCode.OK
-            };
+                return new BaseResponse<UserProfileResponseModel>
+                {
+                    Description = $"Error [Create]: {ex.Message}",
+                    StatusCode = HttpStatusCode.InternalServerError
+                };
+            }            
         }
         public async Task<IBaseResponse<UserProfileResponseModel>> Get(int UserId)
         {   
@@ -137,9 +192,11 @@ namespace AnimeList.Services.Services
                             Id = x.Id,
                             Name = x.Name,
                             Age = x.Age,
-                            Avatar = x.Avatar,
+                            AvatarUrl = x.FileModel.Path,
                             RegistratedAt = x.RegistratedAt
-                        }
+                        },
+                    include: i => i
+                        .Include(x => x.FileModel)
                  )!;
 
                 return new BaseResponse<UserProfileResponseModel>()

@@ -11,8 +11,8 @@ namespace AnimeList.Domain.ResponseModels.Profile
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public int Age { get; set; }
-        public byte[] Avatar { get; set; }
+        public int? Age { get; set; }
+        public string AvatarUrl { get; set; }
         public DateTime RegistratedAt { get; set; }
     }
 }

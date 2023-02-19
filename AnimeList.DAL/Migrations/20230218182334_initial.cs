@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace AnimeList.DAL.Migrations
 {
-    public partial class init : Migration
+    public partial class initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -71,6 +71,20 @@ namespace AnimeList.DAL.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FileModels",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Path = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FileModels", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -193,12 +207,33 @@ namespace AnimeList.DAL.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Messages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AuthorId = table.Column<int>(type: "int", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Messages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Messages_AspNetUsers_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "News",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<int>(type: "int", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AuthorId = table.Column<int>(type: "int", nullable: false),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -221,8 +256,8 @@ namespace AnimeList.DAL.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Age = table.Column<int>(type: "int", nullable: false),
-                    Avatar = table.Column<byte[]>(type: "varbinary(max)", nullable: false),
+                    Age = table.Column<int>(type: "int", nullable: true),
+                    FileModelId = table.Column<int>(type: "int", nullable: false),
                     RegistratedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -233,6 +268,12 @@ namespace AnimeList.DAL.Migrations
                         name: "FK_Profiles_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Profiles_FileModels_FileModelId",
+                        column: x => x.FileModelId,
+                        principalTable: "FileModels",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -372,9 +413,20 @@ namespace AnimeList.DAL.Migrations
                 column: "NewsId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Messages_AuthorId",
+                table: "Messages",
+                column: "AuthorId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_News_AuthorId",
                 table: "News",
                 column: "AuthorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Profiles_FileModelId",
+                table: "Profiles",
+                column: "FileModelId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Profiles_UserId",
@@ -417,6 +469,9 @@ namespace AnimeList.DAL.Migrations
                 name: "Comments");
 
             migrationBuilder.DropTable(
+                name: "Messages");
+
+            migrationBuilder.DropTable(
                 name: "UserAnimeLists");
 
             migrationBuilder.DropTable(
@@ -436,6 +491,9 @@ namespace AnimeList.DAL.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "FileModels");
         }
     }
 }

@@ -55,17 +55,6 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
-        [HttpGet("getAll/{newsId}")]
-        public async Task<IActionResult> GetAllAsync([FromRoute] int newsId)
-        {
-            var response = await _commentService.GetAll(newsId);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                return Ok(response.Data);
-            }
-            return new BadRequestObjectResult(new { Message = response.Description });
-        }
-
         [HttpPost("edit")]
         public IActionResult Edit([FromForm] CommentRequestModel model)
         {

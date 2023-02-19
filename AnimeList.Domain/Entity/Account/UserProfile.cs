@@ -5,8 +5,9 @@ namespace AnimeList.Domain.Entity.Account
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public int Age { get; set; }
-        public byte[] Avatar { get; set; }
+        public int? Age { get; set; }
+        public int FileModelId { get; set; }
+        public FileModel FileModel { get; set; }
         public DateTime RegistratedAt { get; set; }
         public int UserId { get; set; }
         public ApplicationUser User { get; set; }

@@ -48,9 +48,9 @@ namespace AnimeList.Controllers
         }
 
         [HttpPost("change-avatar")]
-        public IActionResult ChangeAvatar([FromForm] IFormFile avatar)
+        public async Task<IActionResult> ChangeAvatar([FromForm] IFormFile avatar)
         {
-            var response = _profileService.ChangeAvatar(avatar, _userId);
+            var response = await _profileService.ChangeAvatar(avatar, _userId);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(new { Message = "Edit avatar Successfully" });
