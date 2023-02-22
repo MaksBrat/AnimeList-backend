@@ -335,8 +335,8 @@ namespace AnimeList.DAL.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserRating = table.Column<float>(type: "real", nullable: false),
-                    WatchedEpisodes = table.Column<int>(type: "int", nullable: false),
+                    UserRating = table.Column<int>(type: "int", nullable: true),
+                    WatchedEpisodes = table.Column<int>(type: "int", nullable: true),
                     AnimeStatus = table.Column<int>(type: "int", nullable: false),
                     AnimeId = table.Column<int>(type: "int", nullable: false),
                     ProfileId = table.Column<int>(type: "int", nullable: false)

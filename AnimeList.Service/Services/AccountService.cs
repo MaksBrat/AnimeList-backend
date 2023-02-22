@@ -36,7 +36,7 @@ namespace AnimeList.Services.Services
                 {
                     return new BaseResponse<IdentityUser>()
                     {
-                        Description = "User with this username already exists!",
+                        Description = "User with this email already exists!",
                         StatusCode = HttpStatusCode.InternalServerError
                     };
                 }

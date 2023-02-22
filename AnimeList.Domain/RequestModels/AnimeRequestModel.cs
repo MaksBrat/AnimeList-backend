@@ -11,6 +11,7 @@ namespace AnimeList.Domain.RequestModels
     public class AnimeRequestModel
     {
         public int Id { get; set; } 
+        public float Rating { get; set; }
         public string? Title { get; set; }
         public int Episodes { get; set; }
         public int EpisodeDuration { get; set; }

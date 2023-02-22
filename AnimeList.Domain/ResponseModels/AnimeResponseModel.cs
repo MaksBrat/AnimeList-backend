@@ -12,7 +12,7 @@ namespace AnimeList.Domain.ResponseModel
     {
         public int Id { get; set; }
         public string Title { get; set; }
-        public float Rating { get; set; } // based on SelfRating each user
+        public float Rating { get; set; } 
         public int? Episodes { get; set; }
         public int? EpisodeDuration { get; set; }
         public string AnimeType { get; set; }

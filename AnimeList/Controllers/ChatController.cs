@@ -2,6 +2,7 @@
 using AnimeList.Domain.RequestModels.Chat;
 using AnimeList.Hubs;
 using AnimeList.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -28,7 +29,7 @@ namespace AnimeList.Controllers
             var userId = _httpContextAccessor.HttpContext.User.GetUserId();
             if (userId != null)
             {
-                _userId = Int32.Parse(userId);
+                _userId = userId;
             }
             else
             {
@@ -36,6 +37,7 @@ namespace AnimeList.Controllers
             }         
         }
 
+        [Authorize]
         [HttpPost("send")]
         public async Task<IActionResult> Send([FromBody] MessageRequestModel model)
         {
@@ -59,6 +61,7 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
+        [Authorize]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {

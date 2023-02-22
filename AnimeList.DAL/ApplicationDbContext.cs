@@ -96,9 +96,6 @@ namespace AnimeList.DAL
                 .WithMany(n => n.Comments)
                 .HasForeignKey(c => c.NewsId)
                 .OnDelete(DeleteBehavior.NoAction);
-
-
-
         }
     }
 }

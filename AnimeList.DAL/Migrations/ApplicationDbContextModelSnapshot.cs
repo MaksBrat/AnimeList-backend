@@ -168,10 +168,10 @@ namespace AnimeList.DAL.Migrations
                     b.Property<int>("ProfileId")
                         .HasColumnType("int");
 
-                    b.Property<float>("UserRating")
-                        .HasColumnType("real");
+                    b.Property<int?>("UserRating")
+                        .HasColumnType("int");
 
-                    b.Property<int>("WatchedEpisodes")
+                    b.Property<int?>("WatchedEpisodes")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

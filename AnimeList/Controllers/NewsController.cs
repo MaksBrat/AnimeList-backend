@@ -1,12 +1,10 @@
-﻿
-using AnimeList.Domain.RequestModels;
-using AnimeList.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
+﻿using AnimeList.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using AnimeList.Domain.RequestModels.AnimeNews;
 using AnimeList.Common.Extentions;
 using AnimeList.Common.Filters;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AnimeList.Controllers
 {
@@ -27,7 +25,7 @@ namespace AnimeList.Controllers
             var userId = _httpContextAccessor.HttpContext.User.GetUserId();
             if (userId != null)
             {
-                _userId = Int32.Parse(userId);
+                _userId = userId;
             }
             else
             {
@@ -38,7 +36,7 @@ namespace AnimeList.Controllers
         [HttpGet("getAll")]
         public async Task<IActionResult> GetAllNewsWithComments([FromQuery] NewsFilter filter)
         {
-            var response = await _newsService.GetAllAsync(filter);
+            var response = await _newsService.GetAll(filter);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(response.Data);
@@ -46,6 +44,7 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
+        [Authorize]
         [HttpPost("create")]
         public IActionResult Create([FromBody] NewsRequestModel model)
         {
@@ -68,21 +67,11 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
-        [HttpPost("edit")]
-        public IActionResult Edit([FromForm] NewsRequestModel model)
-        {
-            var response = _newsService.Edit(model);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                return Ok(response.Data);
-            }
-            return new BadRequestObjectResult(new { Message = response.Description });
-        }
-
+        [Authorize]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteAsync([FromRoute] int id)
         {
-            var response = await _newsService.DeleteAsync(id);
+            var response = await _newsService.Delete(id);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(response.Data);

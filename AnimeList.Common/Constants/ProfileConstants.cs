@@ -8,6 +8,6 @@ namespace AnimeList.Common.Constants
 {
     public class ProfileConstants
     {
-        public const string DEFAULT_IMAGE_PATH = "user-default-image";
+        public const string DEFAULT_IMAGE_PATH = "/Images/user-default-image.png";
     }
 }

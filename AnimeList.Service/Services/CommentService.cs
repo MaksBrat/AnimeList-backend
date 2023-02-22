@@ -1,4 +1,5 @@
 ﻿using AnimeList.DAL.Interfaces;
+using AnimeList.Domain.Entity.Account;
 using AnimeList.Domain.Entity.AnimeNews;
 using AnimeList.Domain.RequestModels.AnimeNews;
 using AnimeList.Domain.Response;
@@ -26,14 +27,20 @@ namespace AnimeList.Services.Services
         {
             try
             {
-                var comment = _mapper.Map<Comment>(model);
+                var userProfile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
+                    predicate: x => x.UserId == userId,
+                    include: i => i
+                        .Include(x => x.FileModel));
 
+                var comment = _mapper.Map<Comment>(model);
                 comment.AuthorId = userId;
 
                 _unitOfWork.GetRepository<Comment>().Insert(comment);
                 _unitOfWork.SaveChanges();
 
                 var response = _mapper.Map<CommentResponseModel>(comment);
+                response.Author = userProfile.Name;
+                response.AvatarUrl = userProfile.FileModel.Path;
 
                 return new BaseResponse<CommentResponseModel>
                 {
@@ -91,7 +98,7 @@ namespace AnimeList.Services.Services
                 var comments = await _unitOfWork.GetRepository<Comment>().GetAllAsync(
                     predicate: x => x.NewsId == newdId,
                     include: i => i
-                        .Include(x => x.Author.Profile),
+                        .Include(x => x.Author.Profile.FileModel),
                     orderBy: x => x.OrderByDescending(x => x.DateCreated));
 
                 if (comments == null)

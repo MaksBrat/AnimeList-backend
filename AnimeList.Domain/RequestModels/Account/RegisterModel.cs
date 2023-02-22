@@ -22,6 +22,6 @@ namespace AnimeList.Domain.RequestModels.Account
         [DataType(DataType.Password)]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match")]
         [StringLength(30, ErrorMessage = "Password length must be between 6 and 30 characters", MinimumLength = 6)]
-        public string PasswordConfirm { get; set; }
+        public string ConfirmPassword { get; set; }
     }
 }

@@ -1,16 +1,14 @@
 ﻿using AnimeList.DAL.Interfaces;
 using AnimeList.Domain.Entity.AnimeNews;
-using AnimeList.Domain.Entity.Animes;
-using AnimeList.Domain.Entity.Genres;
 using AnimeList.Domain.RequestModels.AnimeNews;
 using AnimeList.Domain.Response;
-using AnimeList.Domain.ResponseModel;
 using AnimeList.Domain.ResponseModels.AnimeNews;
 using AnimeList.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using System.Net;
 using AnimeList.Common.Filters;
+using AnimeList.Domain.Entity.Account;
 
 namespace AnimeList.Services.Services
 {
@@ -29,15 +27,20 @@ namespace AnimeList.Services.Services
         {
 			try
 			{
-                var news = _mapper.Map<News>(model);
+                var userProfile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
+                     predicate: x => x.UserId == userId,
+                     include: i => i
+                         .Include(x => x.FileModel));
 
+                var news = _mapper.Map<News>(model);
                 news.AuthorId = userId;
-                news.DateCreated = DateTime.UtcNow;
 
                 _unitOfWork.GetRepository<News>().Insert(news);
                 _unitOfWork.SaveChanges();
              
                 var response = _mapper.Map<NewsResponseModel>(news);
+                response.Author = userProfile.Name;
+                response.AvatarUrl = userProfile.FileModel.Path;
 
                 return new BaseResponse<NewsResponseModel>
                 {
@@ -61,9 +64,9 @@ namespace AnimeList.Services.Services
                 var news = _unitOfWork.GetRepository<News>().GetFirstOrDefault(
                 predicate: x => x.Id == id,
                 include: i => i
-                    .Include(x => x.Comments)
                     .Include(x => x.Author)
-                        .ThenInclude(x => x.Profile));
+                        .ThenInclude(x => x.Profile)
+                            .ThenInclude(x => x.FileModel));
 
                 if (news == null)
                 {
@@ -93,7 +96,7 @@ namespace AnimeList.Services.Services
             }
 
         }
-        public async Task<IBaseResponse<List<NewsResponseModel>>> GetAllAsync(NewsFilter filter)
+        public async Task<IBaseResponse<List<NewsResponseModel>>> GetAll(NewsFilter filter)
         {
             try
             {
@@ -103,7 +106,8 @@ namespace AnimeList.Services.Services
                     predicate: filter.Predicate,
                     include: x => x
                         .Include(x => x.Author)
-                            .ThenInclude(x => x.Profile),
+                            .ThenInclude(x => x.Profile)
+                                .ThenInclude(x => x.FileModel),
                     orderBy: filter.OrderByQuery,
                     take: filter.Take);
 
@@ -162,7 +166,7 @@ namespace AnimeList.Services.Services
                 };
             }
         }                 
-        public async Task<IBaseResponse<bool>> DeleteAsync(int id)
+        public async Task<IBaseResponse<bool>> Delete(int id)
         {
             try
             {

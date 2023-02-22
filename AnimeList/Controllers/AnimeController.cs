@@ -1,9 +1,8 @@
 ﻿using AnimeList.Common.Filters;
 using AnimeList.Domain.RequestModels;
-using AnimeList.Domain.ResponseModel;
 using AnimeList.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using System.Net;
 
 namespace AnimeList.Controllers
@@ -30,6 +29,7 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
+        [Authorize]
         [HttpPost("create")]
         public IActionResult Create([FromBody] AnimeRequestModel model)
         {
@@ -52,6 +52,7 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
+        [Authorize]
         [HttpPost("edit")]
         public IActionResult Edit([FromBody] AnimeRequestModel model)
         {
@@ -63,6 +64,7 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
+        [Authorize]
         [HttpDelete("delete/{id}")]
         public IActionResult Delete([FromRoute] int id)
         {

@@ -1,11 +1,11 @@
-﻿
-using AnimeList.Domain.RequestModels;
+﻿using AnimeList.Domain.RequestModels;
 using AnimeList.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using AnimeList.Domain.RequestModels.AnimeNews;
 using AnimeList.Common.Extentions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AnimeList.Controllers
 {
@@ -15,6 +15,7 @@ namespace AnimeList.Controllers
     {
         private readonly ICommentService _commentService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+
         private int _userId;
 
         public CommentController(ICommentService commentService, IHttpContextAccessor httpContextAccessor)
@@ -25,7 +26,7 @@ namespace AnimeList.Controllers
             var userId = _httpContextAccessor.HttpContext.User.GetUserId();
             if (userId != null)
             {
-                _userId = Int32.Parse(userId);
+                _userId = userId;
             }
             else
             {
@@ -33,6 +34,7 @@ namespace AnimeList.Controllers
             }   
         }
 
+        [Authorize]
         [HttpPost("create")]
         public IActionResult Create([FromBody] CommentRequestModel model)
         {
@@ -55,6 +57,18 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
+        [HttpGet("getAll/{newsId}")]
+        public async Task<IActionResult> getAll([FromRoute] int newsId)
+        {
+            var response = await _commentService.GetAll(newsId);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                return Ok(response.Data);
+            }
+            return new BadRequestObjectResult(new { Message = response.Description });
+        }
+
+        [Authorize]
         [HttpPost("edit")]
         public IActionResult Edit([FromForm] CommentRequestModel model)
         {
@@ -66,6 +80,7 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
+        [Authorize]
         [HttpDelete("delete/{id}")]
         public IActionResult Delete([FromRoute] int id)
         {

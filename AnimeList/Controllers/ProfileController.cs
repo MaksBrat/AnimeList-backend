@@ -1,16 +1,13 @@
 ﻿using AnimeList.Common.Extentions;
 using AnimeList.Domain.RequestModels;
-using AnimeList.Services.Extentions;
 using AnimeList.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
 using System.Net;
-using System.Security.Claims;
 
 namespace AnimeList.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ProfileController : ControllerBase
@@ -19,6 +16,7 @@ namespace AnimeList.Controllers
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         private int _userId;
+
         public ProfileController(IProfileService profileService,
             IHttpContextAccessor httpContextAccessor)
         {
@@ -28,7 +26,7 @@ namespace AnimeList.Controllers
             var userId = _httpContextAccessor.HttpContext.User.GetUserId();
             if(userId != null)
             {
-                _userId = Int32.Parse(userId);
+                _userId = userId;
             }
             else
             {
@@ -102,8 +100,8 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
-        [HttpPost("changeUserRating/{id}/{rating}")]
-        public IActionResult ChangeUserRating([FromRoute] int id, [FromRoute] int rating)
+        [HttpPost("changeUserRating/{id}/{rating?}")]
+        public IActionResult ChangeUserRating([FromRoute] int id, [FromRoute] int? rating)
         {
             var response = _profileService.ChangeUserRating(id, rating);
             if (response.StatusCode == HttpStatusCode.OK)
@@ -113,8 +111,8 @@ namespace AnimeList.Controllers
             return new BadRequestObjectResult(new { Message = response.Description });
         }
 
-        [HttpPost("changeWatchedEpisides/{id}/{episodes}")]
-        public IActionResult ChangeAnimeStatus([FromRoute] int id, [FromRoute] int episodes)
+        [HttpPost("changeWatchedEpisides/{id}/{episodes?}")]
+        public IActionResult ChangeWatchedEpisodes([FromRoute] int id, [FromRoute] int? episodes)
         {
             var response = _profileService.ChangeWatchedEpisodes(id, episodes);
             if (response.StatusCode == HttpStatusCode.OK)

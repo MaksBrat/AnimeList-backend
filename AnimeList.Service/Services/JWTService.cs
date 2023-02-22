@@ -7,7 +7,6 @@ using AnimeList.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System.Data.Entity;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -19,13 +18,11 @@ namespace AnimeList.Services.Services
     public class JWTService : IJWTService
     {
         private readonly IConfiguration _configuration;
-        private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public JWTService(IConfiguration configuration, IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager)
+        public JWTService(IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
             _configuration = configuration;
-            _unitOfWork = unitOfWork;
             _userManager = userManager;
         }
 

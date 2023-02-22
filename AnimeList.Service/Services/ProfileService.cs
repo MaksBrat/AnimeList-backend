@@ -8,13 +8,10 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using System.Net;
 using AnimeList.Domain.ResponseModels.Profile;
-using System.Diagnostics;
-using AnimeList.Common.Utitlities;
 using AnimeList.Common.Extentions;
 using AnimeList.Domain.Enums;
 using AnimeList.Domain.Entity;
 using Microsoft.AspNetCore.Hosting;
-using AnimeList.Domain.ResponseModels.Chat;
 using AnimeList.Common.Constants;
 
 namespace AnimeList.Services.Services
@@ -36,28 +33,25 @@ namespace AnimeList.Services.Services
             try
             {
                 var profile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
-                    predicate: x => x.UserId == userId);
+                    predicate: x => x.UserId == userId,
+                    include: i => i
+                        .Include(x => x.FileModel));
 
                 if (profile == null)
                 {
                     return new BaseResponse<UserProfileResponseModel>
                     {
-                        Description = "Profile not found"
+                        Description = "Profile not found",
+                        StatusCode = HttpStatusCode.Found,
                     };
                 }
 
-                profile.Age = model.Age;
-                profile.Name = model.Name;
-
-                var response = new UserProfileResponseModel
-                {
-                    Age = profile.Age,
-                    Name = profile.Name,
-                    RegistratedAt = profile.RegistratedAt,
-                };
+                _mapper.Map(model, profile);
 
                 _unitOfWork.GetRepository<UserProfile>().Update(profile);
                 _unitOfWork.SaveChanges();
+
+                var response = _mapper.Map<UserProfileResponseModel>(profile);
 
                 return new BaseResponse<UserProfileResponseModel>
                 {
@@ -155,7 +149,6 @@ namespace AnimeList.Services.Services
                 profile = new UserProfile
                 {
                     Name = $"User{UserIdExtensions.GetId:00000000}",
-                    Age = 100,
                     RegistratedAt = DateTime.UtcNow,
                     UserId = user.Id,
                     FileModelId = file.Id
@@ -187,21 +180,14 @@ namespace AnimeList.Services.Services
             {   
                 var profile = await _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefaultAsync(
                     predicate: x => x.UserId == UserId,
-                    selector: x => new UserProfileResponseModel()
-                        {
-                            Id = x.Id,
-                            Name = x.Name,
-                            Age = x.Age,
-                            AvatarUrl = x.FileModel.Path,
-                            RegistratedAt = x.RegistratedAt
-                        },
                     include: i => i
-                        .Include(x => x.FileModel)
-                 )!;
+                        .Include(x => x.FileModel));
+
+                var response = _mapper.Map<UserProfileResponseModel>(profile);
 
                 return new BaseResponse<UserProfileResponseModel>()
                 {
-                    Data = profile,
+                    Data = response,
                     StatusCode = HttpStatusCode.OK
                 };
             }
@@ -228,6 +214,7 @@ namespace AnimeList.Services.Services
 
                 var profileResponse = _mapper.Map<UserProfileResponseModel>(profile);
                 var animeListResponse = _mapper.Map<ICollection<UserAnimeListResponseModel>>(profile.AnimeList);
+
                 return new BaseResponse<ProfileAnimeListResponseModel>()
                 {
                     Data = new ProfileAnimeListResponseModel { Profile = profileResponse, AnimeList = animeListResponse },
@@ -276,11 +263,22 @@ namespace AnimeList.Services.Services
         {
             try
             {
-                var id = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
-                    predicate: x => x.Anime.Id == animeId && x.ProfileId == userId).Id;
+                var animeInList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
+                    predicate: x => x.Anime.Id == animeId && x.ProfileId == userId);
 
-                _unitOfWork.GetRepository<UserAnimeList>().Delete(id);
+                if(animeInList == null)
+                {
+                    return new BaseResponse<bool>()
+                    {
+                        Data = false,
+                        Description = "anime in list is not found",
+                        StatusCode = HttpStatusCode.NotFound
+                    };
+                }
+
+                _unitOfWork.GetRepository<UserAnimeList>().Delete(animeInList.Id);
                 _unitOfWork.SaveChanges();
+
                 return new BaseResponse<bool>()
                 {
                     Data = true,
@@ -296,14 +294,15 @@ namespace AnimeList.Services.Services
                 };
             }
         }
-        public IBaseResponse<bool> ChangeUserRating (int id, int rating)
+        public IBaseResponse<bool> ChangeUserRating (int id, int? rating)
         {
             try
             {
                 var animeList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
-                predicate: x => x.Id == id);
+                    predicate: x => x.Id == id);
 
                 animeList.UserRating = rating;
+
                 _unitOfWork.GetRepository<UserAnimeList>().Update(animeList);
                 _unitOfWork.SaveChanges();
 
@@ -322,14 +321,15 @@ namespace AnimeList.Services.Services
                 };
             }       
         }
-        public IBaseResponse<bool> ChangeWatchedEpisodes(int id, int episodes)
+        public IBaseResponse<bool> ChangeWatchedEpisodes(int id, int? episodes)
         {
             try
             {
                 var animeList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
-                predicate: x => x.Id == id);
+                    predicate: x => x.Id == id);
 
                 animeList.WatchedEpisodes = episodes;
+
                 _unitOfWork.GetRepository<UserAnimeList>().Update(animeList);
                 _unitOfWork.SaveChanges();
 
@@ -353,9 +353,10 @@ namespace AnimeList.Services.Services
             try
             {
                 var animeList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
-                predicate: x => x.Id == id);
+                    predicate: x => x.Id == id);
 
                 animeList.AnimeStatus = Enum.Parse<AnimeListStatus>(status);
+
                 _unitOfWork.GetRepository<UserAnimeList>().Update(animeList);
                 _unitOfWork.SaveChanges();
 

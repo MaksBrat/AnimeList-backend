@@ -4,16 +4,7 @@ using AnimeList.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using System.Data;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text.Json.Serialization;
-using System.Text.Json;
 using System.Net;
-using AnimeList.Services.Extentions;
-using Microsoft.Net.Http.Headers;
 
 namespace AnimeList.Controllers
 {
@@ -38,7 +29,7 @@ namespace AnimeList.Controllers
             var response = await _accountService.Register(model);
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                return Ok("User created successfully.");
+                return Ok(new { Message = "User created successfully." });
             }
             return new BadRequestObjectResult(new { Message = response.Description });
         }

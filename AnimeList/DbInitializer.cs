@@ -13,6 +13,8 @@ namespace AnimeList
                 return;
             }
 
+            #region Anime
+
             var allAnime = new Anime[]
             {
                 new Anime
@@ -23,6 +25,7 @@ namespace AnimeList
                     EpisodeDuration = 24,
                     AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
+                    PosterUrl = "https://www.nautiljon.com/images/anime/00/03/white_album_2_2630.webp"
                 },
                 new Anime
                 {
@@ -32,6 +35,7 @@ namespace AnimeList
                     EpisodeDuration = 24,
                     AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
+                    PosterUrl = "https://desu.shikimori.one/uploads/poster/animes/16498/main-4c0035b92fad430c6721eb2e3779d384.webp"
                 },
                 new Anime
                 {
@@ -41,6 +45,7 @@ namespace AnimeList
                     EpisodeDuration = 24,
                     AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
+                    PosterUrl = "https://m.media-amazon.com/images/M/MV5BNjRiNmNjMmMtN2U2Yi00ODgxLTk3OTMtMmI1MTI1NjYyZTEzXkEyXkFqcGdeQXVyNjAwNDUxODI@._V1_FMjpg_UX1000_.jpg"
                 },
                 new Anime
                 {
@@ -50,15 +55,17 @@ namespace AnimeList
                     EpisodeDuration = 23,
                     AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
+                    PosterUrl = "https://resizing.flixster.com/oiRj9p9jfMCGBa3WA0zJ8TJ8Bwk=/ems.cHJkLWVtcy1hc3NldHMvdHZzZXJpZXMvMzBiMzU5YzktOGJjOC00ODVhLTk0Y2MtYmUwZjA1Yjk5YTgwLnBuZw=="
                 },
                 new Anime
                 {
-                    Title = "Fate",
+                    Title = "Fate/Zero",
                     Rating = 9,
                     Episodes = 64,
                     EpisodeDuration = 24,
                     AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
+                    PosterUrl = "https://static.wikia.nocookie.net/typemoon/images/f/fe/Fate_zero_anime_1st_season.jpg/revision/latest?cb=20211001233341"
                 },
                 new Anime
                 {
@@ -68,6 +75,7 @@ namespace AnimeList
                     EpisodeDuration = 24,
                     AnimeType = Domain.Enums.AnimeType.Serial,
                     ReleaseDate = DateTime.Now,
+                    PosterUrl = "https://m.media-amazon.com/images/M/MV5BZTI0MDA5MWUtMWMyYS00NWM3LWE5ZmYtYTUxZmMxMGE5Y2IwXkEyXkFqcGdeQXVyNTIxNDgzOTg@._V1_FMjpg_UX1000_.jpg"
                 }
             };
 
@@ -141,17 +149,17 @@ namespace AnimeList
                 },
                 new AnimeGenre
                 {
-                    AnimeId = allAnime.Single(x => x.Title == "Fate").Id,
+                    AnimeId = allAnime.Single(x => x.Title == "Fate/Zero").Id,
                     GenreId = genres.Single(x => x.Name == "Action").Id
                 },
                 new AnimeGenre
                 {
-                    AnimeId = allAnime.Single(x => x.Title == "Fate").Id,
+                    AnimeId = allAnime.Single(x => x.Title == "Fate/Zero").Id,
                     GenreId = genres.Single(x => x.Name == "Drama").Id
                 },
                 new AnimeGenre
                 {
-                    AnimeId = allAnime.Single(x => x.Title == "Fate").Id,
+                    AnimeId = allAnime.Single(x => x.Title == "Fate/Zero").Id,
                     GenreId = genres.Single(x => x.Name == "Magic").Id
                 },
                 new AnimeGenre
@@ -170,8 +178,8 @@ namespace AnimeList
             {
                 var animeGenreInDataBase = context.AnimeGenres.Where(
                     s =>
-                            s.Anime.Id == animeGenre.AnimeId &&
-                            s.Genre.Id == animeGenre.GenreId).SingleOrDefault();
+                        s.Anime.Id == animeGenre.AnimeId &&
+                        s.Genre.Id == animeGenre.GenreId).SingleOrDefault();
 
                 if (animeGenreInDataBase == null)
                 {
@@ -180,6 +188,8 @@ namespace AnimeList
             }
 
             context.SaveChanges();
+
+            #endregion           
         }
     }
 }

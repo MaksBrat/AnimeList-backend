@@ -1,15 +1,12 @@
 ﻿using AnimeList.DAL.Interfaces;
 using AnimeList.Domain.Chat;
 using AnimeList.Domain.Entity.Account;
-using AnimeList.Domain.Entity.AnimeNews;
-using AnimeList.Domain.Pagination;
 using AnimeList.Domain.RequestModels.Chat;
 using AnimeList.Domain.Response;
 using AnimeList.Domain.ResponseModels.Chat;
 using AnimeList.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 using System.Net;
 
 namespace AnimeList.Services.Services

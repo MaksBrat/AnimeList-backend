@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AnimeList.DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230218182334_initial")]
+    [Migration("20230222132125_initial")]
     partial class initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -170,10 +170,10 @@ namespace AnimeList.DAL.Migrations
                     b.Property<int>("ProfileId")
                         .HasColumnType("int");
 
-                    b.Property<float>("UserRating")
-                        .HasColumnType("real");
+                    b.Property<int?>("UserRating")
+                        .HasColumnType("int");
 
-                    b.Property<int>("WatchedEpisodes")
+                    b.Property<int?>("WatchedEpisodes")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

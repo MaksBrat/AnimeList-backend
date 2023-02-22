@@ -9,8 +9,7 @@ namespace AnimeList.Services.Interfaces
     {
         public IBaseResponse<NewsResponseModel> Create(NewsRequestModel model, int userId);
         public IBaseResponse<NewsResponseModel> Get(int id);
-        public Task<IBaseResponse<List<NewsResponseModel>>> GetAllAsync(NewsFilter filter);
-        public IBaseResponse<NewsResponseModel> Edit(NewsRequestModel model);      
-        public Task<IBaseResponse<bool>> DeleteAsync(int id);
+        public Task<IBaseResponse<List<NewsResponseModel>>> GetAll(NewsFilter filter);    
+        public Task<IBaseResponse<bool>> Delete(int id);
     }
 }

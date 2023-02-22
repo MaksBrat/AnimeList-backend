@@ -39,13 +39,13 @@ namespace AnimeList.Services
             #endregion
 
             #region Profile
+
             CreateMap<ProfileRequestModel, UserProfile>();
 
             CreateMap<UserProfile, UserProfileResponseModel>()
                 .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.FileModel.Path));
 
             CreateMap<UserAnimeList, UserAnimeListResponseModel>();
-             
 
             #endregion
 
@@ -53,7 +53,8 @@ namespace AnimeList.Services
 
             CreateMap<News, NewsResponseModel>()
                 .ForMember(dest => dest.Author, opt => opt.MapFrom(src => src.Author.Profile.Name))
-                .ForMember(dest => dest.AuthorId, opt => opt.MapFrom(src => src.Author.Id))
+                .ForMember(dest => dest.AuthorId, opt => opt.MapFrom(src => src.AuthorId))
+                .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.Author.Profile.FileModel.Path))
                 .ForMember(dest => dest.DateCreated, opt => opt.MapFrom(src => src.DateCreated.ToString("yyyy-MM-dd")));
 
             CreateMap<NewsRequestModel, News>()
@@ -64,7 +65,9 @@ namespace AnimeList.Services
             #region Comment
 
             CreateMap<Comment, CommentResponseModel>()
+                .ForMember(dest => dest.Author, opt => opt.MapFrom(src => src.Author.Profile.Name))
                 .ForMember(dest => dest.AuthorId, opt => opt.MapFrom(src => src.AuthorId))
+                .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.Author.Profile.FileModel.Path))
                 .ForMember(dest => dest.DateCreated, opt => opt.MapFrom(src => src.DateCreated.ToString("yyyy-MM-dd")));
 
             CreateMap<CommentRequestModel, Comment>()

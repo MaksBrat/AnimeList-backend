@@ -14,7 +14,7 @@ namespace AnimeList.Domain.ResponseModels.AnimeNews
         public string Title { get; set; }
         public string Author { get; set; }
         public int AuthorId { get; set; }
-        public byte[] AuthorAvatar { get; set; }
+        public string AvatarUrl { get; set; }
         public string Content { get; set; }
         public string DateCreated { get; set; }
         public ICollection<CommentResponseModel> Comments { get; set; }
