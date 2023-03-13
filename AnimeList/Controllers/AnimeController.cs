@@ -1,5 +1,5 @@
-﻿using AnimeList.Common.Filters;
-using AnimeList.Domain.RequestModels;
+﻿using AnimeList.Domain.RequestModels;
+using AnimeList.Domain.RequestModels.EntitiesFilters;
 using AnimeList.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,9 +19,9 @@ namespace AnimeList.Controllers
         }
 
         [HttpGet("getAll")]
-        public async Task<IActionResult> GetAllAnimeWithGenres([FromQuery] AnimeFilter filter)
+        public async Task<IActionResult> GetAllAnime([FromQuery] AnimeFilterRequest filterRequest)
         {
-            var response = await _animeService.GetAll(filter);
+            var response = await _animeService.GetAll(filterRequest);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(response.Data);
@@ -31,7 +31,7 @@ namespace AnimeList.Controllers
 
         [Authorize]
         [HttpPost("create")]
-        public IActionResult Create([FromBody] AnimeRequestModel model)
+        public IActionResult Create([FromBody] AnimeRequest model)
         {
             var response = _animeService.Create(model);
             if (response.StatusCode == HttpStatusCode.OK)
@@ -54,7 +54,7 @@ namespace AnimeList.Controllers
 
         [Authorize]
         [HttpPost("edit")]
-        public IActionResult Edit([FromBody] AnimeRequestModel model)
+        public IActionResult Edit([FromBody] AnimeRequest model)
         {
             var response = _animeService.Edit(model);
             if (response.StatusCode == HttpStatusCode.OK)

@@ -23,20 +23,12 @@ namespace AnimeList.Controllers
             _commentService = commentService;
             _httpContextAccessor = httpContextAccessor;
 
-            var userId = _httpContextAccessor.HttpContext.User.GetUserId();
-            if (userId != null)
-            {
-                _userId = userId;
-            }
-            else
-            {
-                _userId = 0;
-            }   
+            _userId = _httpContextAccessor.HttpContext.User?.GetUserId() ?? 0;
         }
 
         [Authorize]
         [HttpPost("create")]
-        public IActionResult Create([FromBody] CommentRequestModel model)
+        public IActionResult Create([FromBody] CommentRequest model)
         {
             var response = _commentService.Create(model, _userId);
             if (response.StatusCode == HttpStatusCode.OK)
@@ -70,7 +62,7 @@ namespace AnimeList.Controllers
 
         [Authorize]
         [HttpPost("edit")]
-        public IActionResult Edit([FromForm] CommentRequestModel model)
+        public IActionResult Edit([FromForm] CommentRequest model)
         {
             var response = _commentService.Edit(model);
             if (response.StatusCode == HttpStatusCode.OK)

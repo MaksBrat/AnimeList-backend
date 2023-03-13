@@ -11,6 +11,6 @@ namespace AnimeList.Services.Interfaces
         public string GenerateAccessToken(IEnumerable<Claim> authClaims);
         public string GenerateRefreshToken();
         public ClaimsPrincipal? GetPrincipalFromExpiredToken(string? token);
-        public Task<IBaseResponse<AuthenticatedResponse>> RefreshToken(TokenRequestModel tokenModel);
+        public Task<IBaseResponse<AuthenticatedResponse>> RefreshToken(TokenRequest tokenModel);
     }
 }

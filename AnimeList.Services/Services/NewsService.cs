@@ -7,8 +7,9 @@ using AnimeList.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using System.Net;
-using AnimeList.Common.Filters;
 using AnimeList.Domain.Entity.Account;
+using AnimeList.Common.EntitiesFilters;
+using AnimeList.Domain.RequestModels.EntitiesFilters;
 
 namespace AnimeList.Services.Services
 {
@@ -23,179 +24,123 @@ namespace AnimeList.Services.Services
             _mapper = mapper;
         }
 
-        public IBaseResponse<NewsResponseModel> Create(NewsRequestModel model, int userId)
+        public IBaseResponse<NewsResponse> Create(NewsRequest model, int userId)
         {
-			try
-			{
-                var userProfile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
-                     predicate: x => x.UserId == userId,
-                     include: i => i
-                         .Include(x => x.FileModel));
+            var userProfile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
+                    predicate: x => x.UserId == userId,
+                    include: i => i
+                        .Include(x => x.FileModel));
 
-                var news = _mapper.Map<News>(model);
-                news.AuthorId = userId;
+            var news = _mapper.Map<News>(model);
+            news.AuthorId = userId;
 
-                _unitOfWork.GetRepository<News>().Insert(news);
-                _unitOfWork.SaveChanges();
+            _unitOfWork.GetRepository<News>().Insert(news);
+            _unitOfWork.SaveChanges();
              
-                var response = _mapper.Map<NewsResponseModel>(news);
-                response.Author = userProfile.Name;
-                response.AvatarUrl = userProfile.FileModel.Path;
+            var response = _mapper.Map<NewsResponse>(news);
+            response.Author = userProfile.Name;
+            response.AvatarUrl = userProfile.FileModel.Path;
 
-                return new BaseResponse<NewsResponseModel>
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-			catch (Exception ex)
-			{
-                return new BaseResponse<NewsResponseModel>
-                {
-                    Description = $"Error [CreateNews]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
-        }
-        public IBaseResponse<NewsResponseModel> Get(int id)
-        {
-            try
+            return new BaseResponse<NewsResponse>
             {
-                var news = _unitOfWork.GetRepository<News>().GetFirstOrDefault(
-                predicate: x => x.Id == id,
-                include: i => i
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };
+        }
+        public IBaseResponse<NewsResponse> Get(int id)
+        {
+            var news = _unitOfWork.GetRepository<News>().GetFirstOrDefault(
+            predicate: x => x.Id == id,
+            include: i => i
+                .Include(x => x.Author)
+                    .ThenInclude(x => x.Profile)
+                        .ThenInclude(x => x.FileModel));
+
+            if (news == null)
+            {
+                return new BaseResponse<NewsResponse>
+                {
+                    Description = "News not found",
+                    StatusCode = HttpStatusCode.NotFound
+                };
+            }
+
+            var response = _mapper.Map<NewsResponse>(news);
+
+            return new BaseResponse<NewsResponse>
+            {
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };
+        }
+        public async Task<IBaseResponse<List<NewsResponse>>> GetAll(NewsFilterRequest filterRequest)
+        {
+            var filter = _mapper.Map<NewsFilter>(filterRequest);
+
+            filter.CreateFilter();
+
+            var news = await _unitOfWork.GetRepository<News>().GetAllAsync(
+                predicate: filter.Predicate,
+                include: x => x
                     .Include(x => x.Author)
                         .ThenInclude(x => x.Profile)
-                            .ThenInclude(x => x.FileModel));
+                            .ThenInclude(x => x.FileModel),
+                orderBy: filter.OrderByQuery,
+                take: filter.Take);
 
-                if (news == null)
-                {
-                    return new BaseResponse<NewsResponseModel>
-                    {
-                        Description = "News not found",
-                        StatusCode = HttpStatusCode.NotFound
-                    };
-                }
+            var response = _mapper.Map<List<NewsResponse>>(news);
 
-                var response = _mapper.Map<NewsResponseModel>(news);
-
-                return new BaseResponse<NewsResponseModel>
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK
-                };
-
-            }
-            catch (Exception ex)
+            return new BaseResponse<List<NewsResponse>>
             {
-                return new BaseResponse<NewsResponseModel>
-                {
-                    Description = $"Error [GetNews]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
-
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };
         }
-        public async Task<IBaseResponse<List<NewsResponseModel>>> GetAll(NewsFilter filter)
+        public IBaseResponse<NewsResponse> Edit(NewsRequest model)
         {
-            try
-            {
-                filter.Filter();
-
-                var news = await _unitOfWork.GetRepository<News>().GetAllAsync(
-                    predicate: filter.Predicate,
-                    include: x => x
-                        .Include(x => x.Author)
-                            .ThenInclude(x => x.Profile)
-                                .ThenInclude(x => x.FileModel),
-                    orderBy: filter.OrderByQuery,
-                    take: filter.Take);
-
-                var response = _mapper.Map<List<NewsResponseModel>>(news);
-
-                return new BaseResponse<List<NewsResponseModel>>
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponse<List<NewsResponseModel>>
-                {
-                    Description = $"Error [GetAllNews]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
-        }
-        public IBaseResponse<NewsResponseModel> Edit(NewsRequestModel model)
-        {
-            try
-            {
-                var news = _unitOfWork.GetRepository<News>().GetFirstOrDefault(
-                    predicate: x => x.Id == model.Id);
+            var news = _unitOfWork.GetRepository<News>().GetFirstOrDefault(
+                predicate: x => x.Id == model.Id);
                    
-                if (news == null)
-                {
-                    return new BaseResponse<NewsResponseModel>
-                    {
-                        Description = "News not found",
-                        StatusCode = HttpStatusCode.NotFound
-                    };
-                }
-
-                _mapper.Map(model, news);
-
-                _unitOfWork.GetRepository<News>().Update(news);
-                _unitOfWork.SaveChanges();
-
-                var response = _mapper.Map<NewsResponseModel>(news);
-
-                return new BaseResponse<NewsResponseModel>
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
+            if (news == null)
             {
-                return new BaseResponse<NewsResponseModel>
+                return new BaseResponse<NewsResponse>
                 {
-                    Description = $"Error [EditNews]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
+                    Description = "News not found",
+                    StatusCode = HttpStatusCode.NotFound
                 };
             }
+
+            _mapper.Map(model, news);
+
+            _unitOfWork.GetRepository<News>().Update(news);
+            _unitOfWork.SaveChanges();
+
+            var response = _mapper.Map<NewsResponse>(news);
+
+            return new BaseResponse<NewsResponse>
+            {
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };
         }                 
         public async Task<IBaseResponse<bool>> Delete(int id)
         {
-            try
+            var comments = await _unitOfWork.GetRepository<Comment>().GetAllAsync(
+                predicate: x => x.NewsId == id);
+
+            foreach(var comment in comments)
             {
-                var comments = await _unitOfWork.GetRepository<Comment>().GetAllAsync(
-                    predicate: x => x.NewsId == id);
-
-                foreach(var comment in comments)
-                {
-                    _unitOfWork.GetRepository<Comment>().Delete(comment);
-                }
-
-                _unitOfWork.GetRepository<News>().Delete(id);
-                _unitOfWork.SaveChanges();
-
-                return new BaseResponse<bool>
-                {
-                    Data = true,
-                    StatusCode = HttpStatusCode.OK
-                };
-
+                _unitOfWork.GetRepository<Comment>().Delete(comment);
             }
-            catch (Exception ex)
+
+            _unitOfWork.GetRepository<News>().Delete(id);
+            _unitOfWork.SaveChanges();
+
+            return new BaseResponse<bool>
             {
-                return new BaseResponse<bool>
-                {
-                    Description = $"Error Delete: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
+                Data = true,
+                StatusCode = HttpStatusCode.OK
+            };
         }
     }
 }

@@ -8,11 +8,11 @@ namespace AnimeList.Services.Interfaces
 {
     public interface IProfileService
     {
-        public IBaseResponse<UserProfileResponseModel> Edit(ProfileRequestModel model, int userId);
-        public Task<IBaseResponse<UserProfileResponseModel>> ChangeAvatar(IFormFile avatar, int userId);
-        public Task<IBaseResponse<UserProfileResponseModel>> Create(ApplicationUser user);
-        public Task<IBaseResponse<UserProfileResponseModel>> Get(int UserId);
-        public IBaseResponse<ProfileAnimeListResponseModel> GetProfileWithAnimeList(int userId);
+        public IBaseResponse<UserProfileResponse> Edit(ProfileRequest model, int userId);
+        public Task<IBaseResponse<UserProfileResponse>> ChangeAvatar(IFormFile avatar, int userId);
+        public Task<IBaseResponse<UserProfileResponse>> Create(ApplicationUser user);
+        public Task<IBaseResponse<UserProfileResponse>> Get(int UserId);
+        public IBaseResponse<ProfileAnimeListResponse> GetProfileWithAnimeList(int userId);
         public IBaseResponse<bool> AddAnimeToList(int userId, int animeId);
         public IBaseResponse<bool> DeleteAnimeFromList(int animeId, int userId);
         public IBaseResponse<bool> ChangeUserRating(int id, int? rating);

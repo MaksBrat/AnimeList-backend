@@ -15,9 +15,9 @@ namespace AnimeList.Services.Interfaces
 {
     public interface IMessageService
     {
-        public IBaseResponse<MessageResponseModel> Create(MessageRequestModel model, int userId);
-        public IBaseResponse<MessageResponseModel> Get(int id);
-        public Task<IBaseResponse<List<MessageResponseModel>>> GetChatHistory(int pageIndex, int pageSize);
+        public IBaseResponse<MessageResponse> Create(MessageRequest model, int userId);
+        public IBaseResponse<MessageResponse> Get(int id);
+        public Task<IBaseResponse<List<MessageResponse>>> GetChatHistory(int pageIndex, int pageSize);
         public IBaseResponse<bool> Delete(int id);
     }
 }

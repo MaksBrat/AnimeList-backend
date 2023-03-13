@@ -23,19 +23,11 @@ namespace AnimeList.Controllers
             _profileService = profileService;
             _httpContextAccessor = httpContextAccessor;
 
-            var userId = _httpContextAccessor.HttpContext.User.GetUserId();
-            if(userId != null)
-            {
-                _userId = userId;
-            }
-            else
-            {
-                _userId = 0;
-            }
+            _userId = _httpContextAccessor.HttpContext.User?.GetUserId() ?? 0;
         }
 
         [HttpPost("edit")]
-        public IActionResult Edit([FromForm] ProfileRequestModel profile)
+        public IActionResult Edit([FromForm] ProfileRequest profile)
         {          
             var response = _profileService.Edit(profile, _userId);
             if (response.StatusCode == HttpStatusCode.OK)

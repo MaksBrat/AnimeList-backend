@@ -11,8 +11,8 @@ using AnimeList.Domain.ResponseModels.Profile;
 using AnimeList.Common.Extentions;
 using AnimeList.Domain.Enums;
 using AnimeList.Domain.Entity;
-using Microsoft.AspNetCore.Hosting;
-using AnimeList.Common.Constants;
+using Microsoft.Extensions.Configuration;
+using Azure.Storage.Blobs;
 
 namespace AnimeList.Services.Services
 {
@@ -20,360 +20,257 @@ namespace AnimeList.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        private readonly IWebHostEnvironment _appEnvironment;
-        public ProfileService(IUnitOfWork unitOfWork, IMapper mapper, IWebHostEnvironment appEnvironment)
+        private readonly IConfiguration _configuration;
+        public ProfileService(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration configuration)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-            _appEnvironment = appEnvironment;
+            _configuration = configuration;
         }
 
-        public IBaseResponse<UserProfileResponseModel> Edit(ProfileRequestModel model, int userId)
+        public IBaseResponse<UserProfileResponse> Edit(ProfileRequest model, int userId)
         {
-            try
+            var profile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
+                predicate: x => x.UserId == userId,
+                include: i => i
+                    .Include(x => x.FileModel));
+
+            if (profile == null)
             {
-                var profile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
-                    predicate: x => x.UserId == userId,
-                    include: i => i
-                        .Include(x => x.FileModel));
-
-                if (profile == null)
+                return new BaseResponse<UserProfileResponse>
                 {
-                    return new BaseResponse<UserProfileResponseModel>
-                    {
-                        Description = "Profile not found",
-                        StatusCode = HttpStatusCode.Found,
-                    };
-                }
-
-                _mapper.Map(model, profile);
-
-                _unitOfWork.GetRepository<UserProfile>().Update(profile);
-                _unitOfWork.SaveChanges();
-
-                var response = _mapper.Map<UserProfileResponseModel>(profile);
-
-                return new BaseResponse<UserProfileResponseModel>
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK,
+                    Description = "Profile not found",
+                    StatusCode = HttpStatusCode.Found,
                 };
             }
-            catch (Exception ex)
+
+            _mapper.Map(model, profile);
+
+            _unitOfWork.GetRepository<UserProfile>().Update(profile);
+            _unitOfWork.SaveChanges();
+
+            var response = _mapper.Map<UserProfileResponse>(profile);
+
+            return new BaseResponse<UserProfileResponse>
             {
-                return new BaseResponse<UserProfileResponseModel>
-                {
-                    Description = $"Error [Edit]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }          
+                Data = response,
+                StatusCode = HttpStatusCode.OK,
+            };         
         }
-        public async Task<IBaseResponse<UserProfileResponseModel>> ChangeAvatar(IFormFile avatar, int userId)
+        public async Task<IBaseResponse<UserProfileResponse>> ChangeAvatar(IFormFile avatar, int userId)
         {
-            try
+            var profile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
+                predicate: x => x.UserId == userId,
+                include: i => i
+                    .Include(x => x.FileModel));
+
+            if (profile == null)
             {
-                var profile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
-                    predicate: x => x.UserId == userId,
-                    include: i => i
-                        .Include(x => x.FileModel));
-
-                if (profile == null)
+                return new BaseResponse<UserProfileResponse>
                 {
-                    return new BaseResponse<UserProfileResponseModel>
-                    {
-                        Description = "Profile not found"
-                    };
-                }
-
-                var file = profile.FileModel;
-                
-                string oldPath = profile.FileModel?.Path;
-                string path = "/Images/" + avatar.FileName;
-
-                using (var fileStream = new FileStream(_appEnvironment.WebRootPath + path, FileMode.Create))
-                {
-                    await avatar.CopyToAsync(fileStream);
-                }
-
-                file.Path = path;
-                file.Name = avatar.FileName;
-
-                _unitOfWork.GetRepository<FileModel>().Update(file);
-                _unitOfWork.SaveChanges();
-
-                if (oldPath != ProfileConstants.DEFAULT_IMAGE_PATH)
-                {
-                    File.Delete(_appEnvironment.WebRootPath + oldPath);
-                }
-
-                var response = _mapper.Map<UserProfileResponseModel>(profile);
-
-                return new BaseResponse<UserProfileResponseModel>
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK,
+                    Description = "Profile not found",
+                    StatusCode = HttpStatusCode.NotFound,
                 };
             }
-            catch (Exception ex)
+
+            var connectionString = _configuration["BlobStorage:BlobStorageConnection"];
+            var containerName = _configuration["BlobStorage:ContainerName"];
+
+            var blobServiceClient = new BlobServiceClient(connectionString);
+            var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+            
+            var file = profile.FileModel;
+            string oldPath = file.Path;
+
+            BlobClient blobClient;
+
+            if (oldPath != _configuration["BlobStorage:UserDefaultImageUrl"])
             {
-                return new BaseResponse<UserProfileResponseModel>
-                {
-                    Description = $"Error [ChangeAvatar]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }    
+                // Delete the old avatar image from blob storage
+                blobClient = containerClient.GetBlobClient(file.Name);
+                await blobClient.DeleteIfExistsAsync();
+            }
+
+            // Upload the new avatar image to blob storage
+            var blobName = Guid.NewGuid().ToString() + Path.GetExtension(avatar.FileName);
+            blobClient = containerClient.GetBlobClient(blobName);
+            var result = await blobClient.UploadAsync(avatar.OpenReadStream());
+
+            file.Path = blobClient.Uri.ToString();
+            file.Name = blobName;
+
+            _unitOfWork.GetRepository<FileModel>().Update(file);
+            _unitOfWork.SaveChanges();
+
+            var response = _mapper.Map<UserProfileResponse>(profile);
+
+            return new BaseResponse<UserProfileResponse>
+            {
+                Data = response,
+                StatusCode = HttpStatusCode.OK,
+            };   
         }
-        public async Task<IBaseResponse<UserProfileResponseModel>> Create(ApplicationUser user)
+        public async Task<IBaseResponse<UserProfileResponse>> Create(ApplicationUser user)
         {
-            try
+            var profile = await _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefaultAsync(
+            predicate: x => x.Id == user.Id);
+
+            if (profile != null)
             {
-                var profile = await _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefaultAsync(
-                predicate: x => x.Id == user.Id);
-
-                if (profile != null)
+                return new BaseResponse<UserProfileResponse>
                 {
-                    return new BaseResponse<UserProfileResponseModel>
-                    {
-                        Description = "Profile already exists",
-                        StatusCode = HttpStatusCode.OK
-                    };
-                }
-
-                string path = "/Images/user-default-image.png";
-
-                var file = new FileModel { Name = "user-default-image", Path = path};
-
-                _unitOfWork.GetRepository<FileModel>().Insert(file);
-                _unitOfWork.SaveChanges();
-
-                profile = new UserProfile
-                {
-                    Name = $"User{UserIdExtensions.GetId:00000000}",
-                    RegistratedAt = DateTime.UtcNow,
-                    UserId = user.Id,
-                    FileModelId = file.Id
-                };
-
-                _unitOfWork.GetRepository<UserProfile>().Insert(profile);
-                _unitOfWork.SaveChanges();
-
-                var response = _mapper.Map<UserProfileResponseModel>(profile);
-
-                return new BaseResponse<UserProfileResponseModel>
-                {
-                    Data = response,
+                    Description = "Profile already exists",
                     StatusCode = HttpStatusCode.OK
                 };
             }
-            catch (Exception ex)
-            {
-                return new BaseResponse<UserProfileResponseModel>
-                {
-                    Description = $"Error [Create]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }            
-        }
-        public async Task<IBaseResponse<UserProfileResponseModel>> Get(int UserId)
-        {   
-            try
-            {   
-                var profile = await _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefaultAsync(
-                    predicate: x => x.UserId == UserId,
-                    include: i => i
-                        .Include(x => x.FileModel));
 
-                var response = _mapper.Map<UserProfileResponseModel>(profile);
+            var file = new FileModel { Name = "user-default-image.png", Path = _configuration["BlobStorage:UserDefaultImageUrl"] };
 
-                return new BaseResponse<UserProfileResponseModel>()
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
+            _unitOfWork.GetRepository<FileModel>().Insert(file);
+            _unitOfWork.SaveChanges();
+
+            profile = new UserProfile
             {
-                return new BaseResponse<UserProfileResponseModel>()
-                {
-                    Description = ex.Message,
-                    StatusCode = HttpStatusCode.InternalServerError,  
-                };
-            }
+                Name = $"User{UserIdExtensions.GetId:00000000}",
+                RegistratedAt = DateTime.UtcNow,
+                UserId = user.Id,
+                FileModelId = file.Id
+            };
+
+            _unitOfWork.GetRepository<UserProfile>().Insert(profile);
+            _unitOfWork.SaveChanges();
+
+            var response = _mapper.Map<UserProfileResponse>(profile);
+
+            return new BaseResponse<UserProfileResponse>
+            {
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };           
         }
-        public IBaseResponse<ProfileAnimeListResponseModel> GetProfileWithAnimeList(int userId)
+        public async Task<IBaseResponse<UserProfileResponse>> Get(int UserId)
+        {    
+            var profile = await _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefaultAsync(
+                predicate: x => x.UserId == UserId,
+                include: i => i
+                    .Include(x => x.FileModel));
+
+            var response = _mapper.Map<UserProfileResponse>(profile);
+
+            return new BaseResponse<UserProfileResponse>()
+            {
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };
+        }
+        public IBaseResponse<ProfileAnimeListResponse> GetProfileWithAnimeList(int userId)
         {
-            try
-            {
-                var profile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
-                    predicate: x => x.UserId == userId,
-                    include: i => i
-                        .Include(x => x.AnimeList)
-                            .ThenInclude(x => x.Anime)
-                                   .ThenInclude(x => x.AnimeGenres)
-                                       .ThenInclude(x => x.Genre));
+            var profile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
+                predicate: x => x.UserId == userId,
+                include: i => i
+                    .Include(x => x.AnimeList)
+                        .ThenInclude(x => x.Anime)
+                                .ThenInclude(x => x.AnimeGenres)
+                                    .ThenInclude(x => x.Genre));
 
-                var profileResponse = _mapper.Map<UserProfileResponseModel>(profile);
-                var animeListResponse = _mapper.Map<ICollection<UserAnimeListResponseModel>>(profile.AnimeList);
+            var profileResponse = _mapper.Map<UserProfileResponse>(profile);
+            var animeListResponse = _mapper.Map<ICollection<UserAnimeListResponse>>(profile.AnimeList);
 
-                return new BaseResponse<ProfileAnimeListResponseModel>()
-                {
-                    Data = new ProfileAnimeListResponseModel { Profile = profileResponse, AnimeList = animeListResponse },
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
+            return new BaseResponse<ProfileAnimeListResponse>()
             {
-                return new BaseResponse<ProfileAnimeListResponseModel>()
-                {
-                    Description = ex.Message,
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
+                Data = new ProfileAnimeListResponse { Profile = profileResponse, AnimeList = animeListResponse },
+                StatusCode = HttpStatusCode.OK
+            };
         }
         public IBaseResponse<bool> AddAnimeToList(int userId, int animeId)
         {
-            try
+            var userAnime = new UserAnimeList
             {
-                var userAnime = new UserAnimeList
-                {
-                    AnimeId = animeId,
-                    ProfileId = userId,
-                    AnimeStatus = Domain.Enums.AnimeListStatus.WantToWatch
-                };
+                AnimeId = animeId,
+                ProfileId = userId,
+                AnimeStatus = Domain.Enums.AnimeListStatus.WantToWatch
+            };
 
-                _unitOfWork.GetRepository<UserAnimeList>().Insert(userAnime);
-                _unitOfWork.SaveChanges();
+            _unitOfWork.GetRepository<UserAnimeList>().Insert(userAnime);
+            _unitOfWork.SaveChanges();
 
-                return new BaseResponse<bool>
-                {
-                    Data = true,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
+            return new BaseResponse<bool>
             {
-                return new BaseResponse<bool>()
-                {
-                    Description = ex.Message,
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
+                Data = true,
+                StatusCode = HttpStatusCode.OK
+            };
         }
         public IBaseResponse<bool> DeleteAnimeFromList(int animeId, int userId)
         {
-            try
-            {
-                var animeInList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
-                    predicate: x => x.Anime.Id == animeId && x.ProfileId == userId);
+            var animeInList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
+                predicate: x => x.Anime.Id == animeId && x.ProfileId == userId);
 
-                if(animeInList == null)
-                {
-                    return new BaseResponse<bool>()
-                    {
-                        Data = false,
-                        Description = "anime in list is not found",
-                        StatusCode = HttpStatusCode.NotFound
-                    };
-                }
-
-                _unitOfWork.GetRepository<UserAnimeList>().Delete(animeInList.Id);
-                _unitOfWork.SaveChanges();
-
-                return new BaseResponse<bool>()
-                {
-                    Data = true,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
+            if(animeInList == null)
             {
                 return new BaseResponse<bool>()
                 {
-                    Description = ex.Message,
-                    StatusCode = HttpStatusCode.InternalServerError
+                    Data = false,
+                    Description = "Anime in list is not found",
+                    StatusCode = HttpStatusCode.NotFound
                 };
             }
+
+            _unitOfWork.GetRepository<UserAnimeList>().Delete(animeInList.Id);
+            _unitOfWork.SaveChanges();
+
+            return new BaseResponse<bool>()
+            {
+                Data = true,
+                StatusCode = HttpStatusCode.OK
+            };
         }
         public IBaseResponse<bool> ChangeUserRating (int id, int? rating)
         {
-            try
+            var animeList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
+                predicate: x => x.Id == id);
+
+            animeList.UserRating = rating;
+
+            _unitOfWork.GetRepository<UserAnimeList>().Update(animeList);
+            _unitOfWork.SaveChanges();
+
+            return new BaseResponse<bool>()
             {
-                var animeList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
-                    predicate: x => x.Id == id);
-
-                animeList.UserRating = rating;
-
-                _unitOfWork.GetRepository<UserAnimeList>().Update(animeList);
-                _unitOfWork.SaveChanges();
-
-                return new BaseResponse<bool>()
-                {
-                    Data = true,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponse<bool>()
-                {
-                    Description = ex.Message,
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }       
+                Data = true,
+                StatusCode = HttpStatusCode.OK
+            };      
         }
         public IBaseResponse<bool> ChangeWatchedEpisodes(int id, int? episodes)
         {
-            try
+            var animeList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
+                predicate: x => x.Id == id);
+
+            animeList.WatchedEpisodes = episodes;
+
+            _unitOfWork.GetRepository<UserAnimeList>().Update(animeList);
+            _unitOfWork.SaveChanges();
+
+            return new BaseResponse<bool>()
             {
-                var animeList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
-                    predicate: x => x.Id == id);
-
-                animeList.WatchedEpisodes = episodes;
-
-                _unitOfWork.GetRepository<UserAnimeList>().Update(animeList);
-                _unitOfWork.SaveChanges();
-
-                return new BaseResponse<bool>()
-                {
-                    Data = true,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponse<bool>()
-                {
-                    Description = ex.Message,
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
+                Data = true,
+                StatusCode = HttpStatusCode.OK
+            };
         }
         public IBaseResponse<bool> ChangeAnimeStatus(int id, string status)
         {
-            try
+            var animeList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
+                predicate: x => x.Id == id);
+
+            animeList.AnimeStatus = Enum.Parse<AnimeListStatus>(status);
+
+            _unitOfWork.GetRepository<UserAnimeList>().Update(animeList);
+            _unitOfWork.SaveChanges();
+
+            return new BaseResponse<bool>()
             {
-                var animeList = _unitOfWork.GetRepository<UserAnimeList>().GetFirstOrDefault(
-                    predicate: x => x.Id == id);
-
-                animeList.AnimeStatus = Enum.Parse<AnimeListStatus>(status);
-
-                _unitOfWork.GetRepository<UserAnimeList>().Update(animeList);
-                _unitOfWork.SaveChanges();
-
-                return new BaseResponse<bool>()
-                {
-                    Data = true,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponse<bool>()
-                {
-                    Description = ex.Message,
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }            
+                Data = true,
+                StatusCode = HttpStatusCode.OK
+            };           
         }
     }
 }

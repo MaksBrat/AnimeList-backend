@@ -78,7 +78,7 @@ namespace AnimeList.Services.Services
                 
             return principal;
         }
-        public async Task<IBaseResponse<AuthenticatedResponse>> RefreshToken(TokenRequestModel tokenModel)
+        public async Task<IBaseResponse<AuthenticatedResponse>> RefreshToken(TokenRequest tokenModel)
         {   
             if(tokenModel == null)
             {

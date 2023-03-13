@@ -6,10 +6,10 @@ namespace AnimeList.Services.Interfaces
 {
     public interface ICommentService
     {
-        public IBaseResponse<CommentResponseModel> Create(CommentRequestModel model,int userId);
-        public IBaseResponse<CommentResponseModel> Get(int id);
-        public Task<IBaseResponse<List<CommentResponseModel>>> GetAll(int newdId);
-        public IBaseResponse<CommentResponseModel> Edit(CommentRequestModel model);     
+        public IBaseResponse<CommentResponse> Create(CommentRequest model,int userId);
+        public IBaseResponse<CommentResponse> Get(int id);
+        public Task<IBaseResponse<List<CommentResponse>>> GetAll(int newdId);
+        public IBaseResponse<CommentResponse> Edit(CommentRequest model);     
         public IBaseResponse<bool> Delete(int id);
     }
 }

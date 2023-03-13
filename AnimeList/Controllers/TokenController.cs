@@ -1,9 +1,6 @@
 ﻿using AnimeList.Domain.RequestModels;
 using AnimeList.Services.Interfaces;
-using AnimeList.Services.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
 
 namespace AnimeList.Controllers
 {
@@ -18,9 +15,8 @@ namespace AnimeList.Controllers
             _jwtService = jwtService;
         }
 
-        [HttpPost]
-        [Route("refresh")]
-        public async Task<IActionResult> Refresh(TokenRequestModel model)
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh(TokenRequest model)
         {
             var response = await _jwtService.RefreshToken(model);
             if(response.StatusCode == System.Net.HttpStatusCode.OK)

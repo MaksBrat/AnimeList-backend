@@ -9,16 +9,17 @@ namespace AnimeList.Common.Extentions
 {
     public static class ClaimsPrincipalExtentions
     {
-        public static int GetUserId(this ClaimsPrincipal userClaims)
+        public static int? GetUserId(this ClaimsPrincipal userClaims)
         {
-            try
+            string claimValue = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (int.TryParse(claimValue, out int userId))
             {
-                string claim = userClaims.Claims.FirstOrDefault(w => w.Type == ClaimTypes.NameIdentifier)?.Value;
-                return Int32.Parse(claim);
+                return userId;
             }
-            catch
+            else
             {
-                return 0;
+                return null;
             }
         }
     }

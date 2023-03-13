@@ -1,17 +1,13 @@
 using AnimeList.DAL;
 using AnimeList;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using AnimeList.Domain.Entity.Account;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
-using System.Web.Http;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AnimeList.Services;
 using AnimeList.Hubs;
+using NLog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +20,10 @@ builder.Services.AddHttpContextAccessor();
 
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
 
+//Logging
+LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(), "/nlog.config"));
+
+//Database
 builder.Services.AddDbContext<ApplicationDbContext>(option =>
         option.UseSqlServer(connection));
 
@@ -56,6 +56,8 @@ builder.Services.AddMvc();
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
+builder.Services.AddSwaggerGen();
+
 //SignalR
 builder.Services.AddSignalR();
 
@@ -70,7 +72,11 @@ builder.Services.AddSingleton(config.CreateMapper());
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularClient",
-        builder => builder.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader());
+       builder => builder
+       .WithOrigins("http://localhost:4200")
+       .WithOrigins("https://maksbrat.github.io")
+       .AllowAnyMethod()
+       .AllowAnyHeader());
 });
 
 var app = builder.Build();
@@ -78,6 +84,8 @@ var app = builder.Build();
 var scope = app.Services.CreateScope();
 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 DbInitializer.Initialize(context);
+
+app.ConfigureCustomExceptionMiddleware();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -88,6 +96,12 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+});
 
 app.MapControllers();
 

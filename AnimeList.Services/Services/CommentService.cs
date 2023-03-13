@@ -9,7 +9,6 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 
-
 namespace AnimeList.Services.Services
 {
     public class CommentService : ICommentService
@@ -23,10 +22,8 @@ namespace AnimeList.Services.Services
             _mapper = mapper;
         }
 
-        public IBaseResponse<CommentResponseModel> Create(CommentRequestModel model, int userId)
+        public IBaseResponse<CommentResponse> Create(CommentRequest model, int userId)
         {
-            try
-            {
                 var userProfile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
                     predicate: x => x.UserId == userId,
                     include: i => i
@@ -38,156 +35,100 @@ namespace AnimeList.Services.Services
                 _unitOfWork.GetRepository<Comment>().Insert(comment);
                 _unitOfWork.SaveChanges();
 
-                var response = _mapper.Map<CommentResponseModel>(comment);
+                var response = _mapper.Map<CommentResponse>(comment);
                 response.Author = userProfile.Name;
                 response.AvatarUrl = userProfile.FileModel.Path;
 
-                return new BaseResponse<CommentResponseModel>
+                return new BaseResponse<CommentResponse>
                 {
                     Data = response,
                     StatusCode = HttpStatusCode.OK
                 };
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponse<CommentResponseModel>
-                {
-                    Description = $"Error [CreateComment]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
         }
-        public IBaseResponse<CommentResponseModel> Get(int id)
+        public IBaseResponse<CommentResponse> Get(int id)
         {
-            try
-            {
                 var comment = _unitOfWork.GetRepository<Comment>().GetFirstOrDefault(
                     predicate: x => x.Id == id);
 
                 if (comment == null)
                 {
-                    return new BaseResponse<CommentResponseModel>
+                    return new BaseResponse<CommentResponse>
                     {
                         Description = "News not found",
                         StatusCode = HttpStatusCode.NotFound
                     };
                 }
 
-                var response = _mapper.Map<CommentResponseModel>(comment);
+                var response = _mapper.Map<CommentResponse>(comment);
 
-                return new BaseResponse<CommentResponseModel>
+                return new BaseResponse<CommentResponse>
                 {
                     Data = response,
                     StatusCode = HttpStatusCode.OK
                 };
-
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponse<CommentResponseModel>
-                {
-                    Description = $"Error [GetComment]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
         }
-        public async Task<IBaseResponse<List<CommentResponseModel>>> GetAll(int newdId)
+        public async Task<IBaseResponse<List<CommentResponse>>> GetAll(int newdId)
         {
-            try
-            {   
-                var comments = await _unitOfWork.GetRepository<Comment>().GetAllAsync(
-                    predicate: x => x.NewsId == newdId,
-                    include: i => i
-                        .Include(x => x.Author.Profile.FileModel),
-                    orderBy: x => x.OrderByDescending(x => x.DateCreated));
+            var comments = await _unitOfWork.GetRepository<Comment>().GetAllAsync(
+                predicate: x => x.NewsId == newdId,
+                include: i => i
+                    .Include(x => x.Author.Profile.FileModel),
+                orderBy: x => x.OrderByDescending(x => x.DateCreated));
 
-                if (comments == null)
-                {
-                    return new BaseResponse<List<CommentResponseModel>>
-                    {
-                        Description = "Commets not found",
-                        StatusCode = HttpStatusCode.NotFound
-                    };
-                }
-
-                var response = _mapper.Map<List<CommentResponseModel>>(comments);
-
-                return new BaseResponse<List<CommentResponseModel>>
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK
-                };
-
-            }
-            catch (Exception ex)
+            if (comments == null)
             {
-                return new BaseResponse<List<CommentResponseModel>>
+                return new BaseResponse<List<CommentResponse>>
                 {
-                    Description = $"Error [GetAllComments]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
+                    Description = "Commets not found",
+                    StatusCode = HttpStatusCode.NotFound
                 };
             }
+
+            var response = _mapper.Map<List<CommentResponse>>(comments);
+
+            return new BaseResponse<List<CommentResponse>>
+            {
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };
         }
-        public IBaseResponse<CommentResponseModel> Edit(CommentRequestModel model)
+        public IBaseResponse<CommentResponse> Edit(CommentRequest model)
         {
-            try
+            var comment = _unitOfWork.GetRepository<News>().GetFirstOrDefault(
+                predicate: x => x.Id == model.Id);
+
+            if (comment == null)
             {
-                var comment = _unitOfWork.GetRepository<News>().GetFirstOrDefault(
-                    predicate: x => x.Id == model.Id);
-
-                if (comment == null)
+                return new BaseResponse<CommentResponse>
                 {
-                    return new BaseResponse<CommentResponseModel>
-                    {
-                        Description = "Comment not found",
-                        StatusCode = HttpStatusCode.NotFound
-                    };
-                }
-
-                _mapper.Map(model, comment);
-
-                _unitOfWork.GetRepository<News>().Update(comment);
-                _unitOfWork.SaveChanges();
-
-                var response = _mapper.Map<CommentResponseModel>(comment);
-
-                return new BaseResponse<CommentResponseModel>
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK
+                    Description = "Comment not found",
+                    StatusCode = HttpStatusCode.NotFound
                 };
             }
-            catch (Exception ex)
+
+            _mapper.Map(model, comment);
+
+            _unitOfWork.GetRepository<News>().Update(comment);
+            _unitOfWork.SaveChanges();
+
+            var response = _mapper.Map<CommentResponse>(comment);
+
+            return new BaseResponse<CommentResponse>
             {
-                return new BaseResponse<CommentResponseModel>
-                {
-                    Description = $"Error [EditComment]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };
         }      
         public IBaseResponse<bool> Delete(int id)
         {
-            try
-            {
-                _unitOfWork.GetRepository<Comment>().Delete(id);
-                _unitOfWork.SaveChanges();
+            _unitOfWork.GetRepository<Comment>().Delete(id);
+            _unitOfWork.SaveChanges();
 
-                return new BaseResponse<bool>
-                {
-                    Data = true,
-                    StatusCode = HttpStatusCode.OK
-                };
-
-            }
-            catch (Exception ex)
+            return new BaseResponse<bool>
             {
-                return new BaseResponse<bool>
-                {
-                    Description = $"Error Delete: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
+                Data = true,
+                StatusCode = HttpStatusCode.OK
+            };
         }
     }
 }

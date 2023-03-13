@@ -8,8 +8,8 @@ namespace AnimeList.Services.Interfaces
 {
     public interface IAccountService
     {
-        Task<IBaseResponse<IdentityUser>> Register(RegisterModel model);
-        Task<IBaseResponse<AuthenticatedResponse>> Login(LoginModel model);
+        Task<IBaseResponse<IdentityUser>> Register(RegisterRequest model);
+        Task<IBaseResponse<AuthenticatedResponse>> Login(LoginRequest model);
         public Task<IBaseResponse<ApplicationUser>> Logout(string userName);
     }
 }

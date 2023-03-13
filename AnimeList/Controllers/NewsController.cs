@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using AnimeList.Domain.RequestModels.AnimeNews;
 using AnimeList.Common.Extentions;
-using AnimeList.Common.Filters;
 using Microsoft.AspNetCore.Authorization;
+using AnimeList.Common.EntitiesFilters;
+using AnimeList.Domain.RequestModels.EntitiesFilters;
 
 namespace AnimeList.Controllers
 {
@@ -22,21 +23,13 @@ namespace AnimeList.Controllers
             _newsService = newsService;
             _httpContextAccessor = httpContextAccessor;
 
-            var userId = _httpContextAccessor.HttpContext.User.GetUserId();
-            if (userId != null)
-            {
-                _userId = userId;
-            }
-            else
-            {
-                _userId = 0;
-            }
+            _userId = _httpContextAccessor.HttpContext.User?.GetUserId() ?? 0;
         }
 
         [HttpGet("getAll")]
-        public async Task<IActionResult> GetAllNewsWithComments([FromQuery] NewsFilter filter)
+        public async Task<IActionResult> GetAllNewsWithComments([FromQuery] NewsFilterRequest filterRequest)
         {
-            var response = await _newsService.GetAll(filter);
+            var response = await _newsService.GetAll(filterRequest);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(response.Data);
@@ -46,7 +39,7 @@ namespace AnimeList.Controllers
 
         [Authorize]
         [HttpPost("create")]
-        public IActionResult Create([FromBody] NewsRequestModel model)
+        public IActionResult Create([FromBody] NewsRequest model)
         {
             var response = _newsService.Create(model, _userId);
             if (response.StatusCode == HttpStatusCode.OK)

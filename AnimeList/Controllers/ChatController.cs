@@ -26,20 +26,12 @@ namespace AnimeList.Controllers
             _messageService = messageService;
             _httpContextAccessor = httpContextAccessor;
 
-            var userId = _httpContextAccessor.HttpContext.User.GetUserId();
-            if (userId != null)
-            {
-                _userId = userId;
-            }
-            else
-            {
-                _userId = 0;
-            }         
+            _userId = _httpContextAccessor.HttpContext.User?.GetUserId() ?? 0;
         }
 
         [Authorize]
         [HttpPost("send")]
-        public async Task<IActionResult> Send([FromBody] MessageRequestModel model)
+        public async Task<IActionResult> Send([FromBody] MessageRequest model)
         {
             var response = _messageService.Create(model, _userId);
             if (response.StatusCode == HttpStatusCode.OK)

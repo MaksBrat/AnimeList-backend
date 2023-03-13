@@ -24,7 +24,7 @@ namespace AnimeList.Controllers
 
         [HttpPost]
         [Route("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest model)
         {
             var response = await _accountService.Register(model);
             if (response.StatusCode == HttpStatusCode.OK)
@@ -36,7 +36,7 @@ namespace AnimeList.Controllers
 
         [HttpPost]
         [Route("login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
             var response = await _accountService.Login(model);
 

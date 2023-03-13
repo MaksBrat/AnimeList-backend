@@ -22,130 +22,84 @@ namespace AnimeList.Services.Services
             _mapper = mapper;
         }
 
-        public IBaseResponse<MessageResponseModel> Create(MessageRequestModel model, int userId)
-        {
-            try
-            {           
-                var userProfile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
-                    predicate: x => x.UserId == userId,
-                    include: i => i
-                        .Include(x => x.FileModel));
-
-                var message = _mapper.Map<Message>(model);
-                message.AuthorId = userId;
-
-                _unitOfWork.GetRepository<Message>().Insert(message);
-                _unitOfWork.SaveChanges();
-
-                var response = _mapper.Map<MessageResponseModel>(message);
-                response.Author = userProfile.Name;
-                response.AvatarUrl = userProfile.FileModel.Path;
-
-                return new BaseResponse<MessageResponseModel>
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponse<MessageResponseModel>
-                {
-                    Description = $"Error [CreateMessage]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
-        }
-        public IBaseResponse<MessageResponseModel> Get(int id)
-        {
-            try
-            {
-                var news = _unitOfWork.GetRepository<Message>().GetFirstOrDefault(
-                predicate: x => x.Id == id,
+        public IBaseResponse<MessageResponse> Create(MessageRequest model, int userId)
+        {        
+            var userProfile = _unitOfWork.GetRepository<UserProfile>().GetFirstOrDefault(
+                predicate: x => x.UserId == userId,
                 include: i => i
-                    .Include(x => x.Author)
-                        .ThenInclude(x => x.Profile));
+                    .Include(x => x.FileModel));
 
-                if (news == null)
-                {
-                    return new BaseResponse<MessageResponseModel>
-                    {
-                        Description = "News not found",
-                        StatusCode = HttpStatusCode.NotFound
-                    };
-                }
+            var message = _mapper.Map<Message>(model);
+            message.AuthorId = userId;
 
-                var response = _mapper.Map<MessageResponseModel>(news);
+            _unitOfWork.GetRepository<Message>().Insert(message);
+            _unitOfWork.SaveChanges();
 
-                return new BaseResponse<MessageResponseModel>
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
+            var response = _mapper.Map<MessageResponse>(message);
+            response.Author = userProfile.Name;
+            response.AvatarUrl = userProfile.FileModel.Path;
+
+            return new BaseResponse<MessageResponse>
             {
-                return new BaseResponse<MessageResponseModel>
-                {
-                    Description = $"Error [GetMessage]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };
         }
-        public async Task<IBaseResponse<List<MessageResponseModel>>> GetChatHistory(int pageIndex, int pageSize)
+        public IBaseResponse<MessageResponse> Get(int id)
         {
-            try
+            var news = _unitOfWork.GetRepository<Message>().GetFirstOrDefault(
+            predicate: x => x.Id == id,
+            include: i => i
+                .Include(x => x.Author)
+                    .ThenInclude(x => x.Profile));
+
+            if (news == null)
             {
-                var messageList = await _unitOfWork.GetRepository<Message>().GetPagedListAsync(
-                    orderBy: x => x.OrderByDescending(x => x.DateCreated),
-                    include: x => x
-                        .Include(x => x.Author)
-                            .ThenInclude(x => x.Profile)
-                                .ThenInclude(x => x.FileModel),
-                    pageIndex: pageIndex,
-                    pageSize: pageSize
-                );
-
-                var response = _mapper.Map<List<MessageResponseModel>>(messageList.Items);
-
-                return new BaseResponse<List<MessageResponseModel>>
+                return new BaseResponse<MessageResponse>
                 {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK
+                    Description = "News not found",
+                    StatusCode = HttpStatusCode.NotFound
                 };
             }
-            catch (Exception ex)
+
+            var response = _mapper.Map<MessageResponse>(news);
+
+            return new BaseResponse<MessageResponse>
             {
-                return new BaseResponse<List<MessageResponseModel>>
-                {
-                    Description = $"Error [GetChatHistory]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };
+        }
+        public async Task<IBaseResponse<List<MessageResponse>>> GetChatHistory(int pageIndex, int pageSize)
+        {
+            var messageList = await _unitOfWork.GetRepository<Message>().GetPagedListAsync(
+                orderBy: x => x.OrderByDescending(x => x.DateCreated),
+                include: x => x
+                    .Include(x => x.Author)
+                        .ThenInclude(x => x.Profile)
+                            .ThenInclude(x => x.FileModel),
+                pageIndex: pageIndex,
+                pageSize: pageSize
+            );
+
+            var response = _mapper.Map<List<MessageResponse>>(messageList.Items);
+
+            return new BaseResponse<List<MessageResponse>>
+            {
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };
         }
         public IBaseResponse<bool> Delete(int id)
-        {
-            try
-            {            
-                _unitOfWork.GetRepository<Message>().Delete(id);
-                _unitOfWork.SaveChanges();
+        {        
+            _unitOfWork.GetRepository<Message>().Delete(id);
+            _unitOfWork.SaveChanges();
 
-                return new BaseResponse<bool>
-                {
-                    Data = true,
-                    StatusCode = HttpStatusCode.OK
-                };
-
-            }
-            catch (Exception ex)
+            return new BaseResponse<bool>
             {
-                return new BaseResponse<bool>
-                {
-                    Description = $"Error [DeleteMessage]: {ex.Message}",
-                    StatusCode = HttpStatusCode.InternalServerError
-                };
-            }
+                Data = true,
+                StatusCode = HttpStatusCode.OK
+            };
         }
-
     }
 }
