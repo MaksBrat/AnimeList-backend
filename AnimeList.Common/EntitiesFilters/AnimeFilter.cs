@@ -1,5 +1,4 @@
 ﻿using AnimeList.Common.EntitiesFilters.Abstract;
-using AnimeList.Common.EntitiesFilters.Base;
 using AnimeList.Domain.Entity.Animes;
 using AnimeList.Domain.Enums;
 using AnimeList.Domain.RequestModels.EntitiesFilters;
@@ -8,24 +7,24 @@ using System.Linq.Expressions;
 
 namespace AnimeList.Common.EntitiesFilters
 {
-    public class AnimeFilter : BaseFilter<Anime>, IFilter
+    public class AnimeFilter : BaseFilter<Anime>
     {       
         public AnimeGenreFilterRequest[]? Genres { get; set; }
         public string? AnimeType { get; set; }
         public string? AnimeStatus { get; set; }
         
-        public void CreateFilter()
+        public override void CreateFilter()
         {
-            base.ApplySearchQueryFilter(nameof(Anime.Title));
-            base.ApplyEnumFilter<AnimeType>(AnimeType, nameof(Anime.AnimeType));
-            base.ApplyEnumFilter<AnimeStatus>(AnimeStatus, nameof(Anime.AnimeStatus));
+            ApplySearchQueryFilter(nameof(Anime.Title));
+            ApplyEnumFilter<AnimeType>(AnimeType, nameof(Anime.AnimeType));
+            ApplyEnumFilter<AnimeStatus>(AnimeStatus, nameof(Anime.AnimeStatus));
 
             if(Genres != null)
             {
                 ApplyGenreFilter();
             }
             
-            base.ApplyOrderByFilter(OrderBy, AscOrDesc);         
+            ApplyOrderByFilter(OrderBy, AscOrDesc);         
         }
 
         private void ApplyGenreFilter()
@@ -34,7 +33,7 @@ namespace AnimeList.Common.EntitiesFilters
             if (genres.Count != 0)
             {
                 Expression<Func<Anime, bool>> predicateGenres = a => a.AnimeGenres.Where(ag => genres.Contains(ag.Genre.Name)).Count() == genres.Count();
-                base.Predicate = base.Predicate == null ? predicateGenres : base.Predicate.And(predicateGenres);
+                Predicate = Predicate == null ? predicateGenres : Predicate.And(predicateGenres);
             }
         }
     }

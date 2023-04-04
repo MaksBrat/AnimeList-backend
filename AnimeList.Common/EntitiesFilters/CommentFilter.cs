@@ -1,14 +1,13 @@
 ﻿using AnimeList.Common.EntitiesFilters.Abstract;
-using AnimeList.Common.EntitiesFilters.Base;
 using AnimeList.Domain.Entity.Animes;
 
 namespace AnimeList.Common.EntitiesFilters
 {
-    public class CommentFilter : BaseFilter<Anime>, IFilter
+    public class CommentFilter : BaseFilter<Anime>
     {
-        public void CreateFilter()
+        public override void CreateFilter()
         {
-            base.ApplyOrderByFilter(OrderBy, AscOrDesc);
+            ApplyOrderByFilter(OrderBy, AscOrDesc);
         }
     }
 }

@@ -21,7 +21,7 @@
     },
     "resourceName": {
       "type": "string",
-      "defaultValue": "AnimeList20230224223617",
+      "defaultValue": "AnimeList20230313164935",
       "metadata": {
         "description": "Name of the main resource to be created by this template."
       }

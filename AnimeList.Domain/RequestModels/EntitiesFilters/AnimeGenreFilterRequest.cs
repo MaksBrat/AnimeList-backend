@@ -2,7 +2,7 @@
 
 namespace AnimeList.Domain.RequestModels.EntitiesFilters
 {
-    public class AnimeGenreFilterRequest : BaseFilterRequest
+    public class AnimeGenreFilterRequest
     {
         public int? Id { get; set; }
         public string? Name { get; set; }

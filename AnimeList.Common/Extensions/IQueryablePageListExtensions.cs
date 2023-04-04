@@ -1,5 +1,4 @@
-﻿
-using AnimeList.Domain.Pagination;
+﻿using AnimeList.Domain.Pagination;
 using Microsoft.EntityFrameworkCore;
 
 namespace AnimeList.Common.Extensions

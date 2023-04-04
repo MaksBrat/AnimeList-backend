@@ -1,9 +1,9 @@
 ﻿using System.Linq.Expressions;
 using AnimeList.Services.Extentions;
 
-namespace AnimeList.Common.EntitiesFilters.Base
+namespace AnimeList.Common.EntitiesFilters.Abstract
 {
-    public class BaseFilter<T> where T : class
+    public abstract class BaseFilter<T> where T : class
     {
         public string? SearchQuery { get; set; }
         public string? OrderBy { get; set; }
@@ -12,6 +12,8 @@ namespace AnimeList.Common.EntitiesFilters.Base
 
         public Expression<Func<T, bool>>? Predicate { get; set; } = null;
         public Func<IQueryable<T>, IOrderedQueryable<T>>? OrderByQuery { get; set; } = null;
+
+        public abstract void CreateFilter();
 
         protected void ApplySearchQueryFilter(string propertyName)
         {
@@ -22,7 +24,7 @@ namespace AnimeList.Common.EntitiesFilters.Base
 
                 var containsMethodExp = typeof(string).GetMethod("Contains", new[] { typeof(string) });
                 var containsExp = Expression.Call(propertyExp, containsMethodExp, Expression.Constant(SearchQuery));
-      
+
                 Predicate = Expression.Lambda<Func<T, bool>>(containsExp, parameterExp);
             }
         }
@@ -36,13 +38,13 @@ namespace AnimeList.Common.EntitiesFilters.Base
                 var propertyExpression = Expression.Property(parameterExpression, propertyName);
                 var equalExpression = Expression.Equal(propertyExpression, Expression.Constant(parsedEnumValue));
 
-                Predicate = Predicate == null 
-                    ? Expression.Lambda<Func<T, bool>>(equalExpression, parameterExpression) 
+                Predicate = Predicate == null
+                    ? Expression.Lambda<Func<T, bool>>(equalExpression, parameterExpression)
                     : Predicate.And(Expression.Lambda<Func<T, bool>>(equalExpression, parameterExpression));
             }
         }
 
-        protected void ApplyOrderByFilter(string propertyName, string ascOrDesc) 
+        protected void ApplyOrderByFilter(string propertyName, string ascOrDesc)
         {
             if (propertyName != null)
             {
@@ -50,11 +52,11 @@ namespace AnimeList.Common.EntitiesFilters.Base
                 Expression property = Expression.Property(param, propertyName);
                 var lambda = Expression.Lambda<Func<T, object>>(Expression.Convert(property, typeof(object)), param);
 
-                if (ascOrDesc == "ASC")
+                if (ascOrDesc.ToUpper() == "ASC")
                 {
                     OrderByQuery = x => x.OrderBy(lambda);
                 }
-                else if (ascOrDesc == "DESC")
+                else if (ascOrDesc.ToUpper() == "DESC")
                 {
                     OrderByQuery = x => x.OrderByDescending(lambda);
                 }
